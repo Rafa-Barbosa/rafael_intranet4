@@ -14,7 +14,7 @@
 <body class="hold-transition login-page" style="background: url('<?php echo $config['raizS3'];?>imagens/trilhas.jpeg'); background-size: cover;">
 <div class="login-box">
   <div class="login-logo">
-    <span style="color: #CCCCCC; font-weight: bold; font-size: x-large;">Verticais | Labs |</span>
+    <span style="color: #CCCCCC; font-weight: bold; font-size: x-large;">Eh us guri | Rafael Barbosa |</span>
   </div>
   <!-- /.login-logo -->
   <div class="card">
