@@ -14,6 +14,7 @@ class fornecedores {
         'incluir'           => true,
         'salvar'            => true,
         'editar'            => true,
+        'excluir'           => true,
 	);
 
 
@@ -29,6 +30,8 @@ class fornecedores {
 		$param['ordenacao'] = false;
 		$param['titulo'] = 'Fornecedores';
 		$this->_tabela = new tabela01($param);
+
+        $this->adicionaJs();
     }
 
     public function index() {
@@ -54,6 +57,18 @@ class fornecedores {
 			'flag' => '',
 			'tamanho' => 'pequeno', //Nenhum fez diferença?
 			'cor' => 'padrão', //padrão: azul; danger: vermelho; success: verde
+			'pos' => 'F',
+		);
+		$this->_tabela->addAcao($param);
+
+        $param = array(
+			'texto' => 'Excluir', //Texto no botão
+			'link' => getLink() . 'excluir&id=', //Link da página para onde o botão manda
+			'coluna' => ['id', 'nome_fantasia'], //Coluna impressa no final do link
+			'width' => 100, //Tamanho do botão
+			'flag' => '',
+			'tamanho' => 'pequeno', //Nenhum fez diferença?
+			'cor' => 'danger', //padrão: azul; danger: vermelho; success: verde
 			'pos' => 'F',
 		);
 		$this->_tabela->addAcao($param);
@@ -136,5 +151,33 @@ class fornecedores {
         }
 
         redireciona(getLink() . "avisos&mensagem=$mensagem");
+    }
+
+    public function excluir() {
+        $get = explode('|', $_GET['id']);
+        $id = $get[0];
+        $nome = $get[1];
+        $excluir = $_GET['excluir'] ?? 0;
+
+        if(!$excluir) {
+            addPortaljavaScript("confirmar('$nome', '$id')");
+        } else {
+            $sql = "DELETE FROM pm_fornecedores WHERE id = $id";
+            query($sql);
+    
+            redireciona(getLink() . "avisos&mensagem=$nome excluído com sucesso!");
+        }
+    }
+
+    private function adicionaJs() {
+        addPortaljavaScript("function confirmar(nome, id) {
+            var get = id + '|' + nome;
+            var res = confirm('Esta ação irá excluir o cliente '+nome+' permanentemente. Deseja continuar?');
+            if(res) {
+                window.location.href = '".getLink() . "excluir&id='+get+'&excluir=1';
+            } else {
+                window.location.href = '".getLink() . "index';
+            }
+        }");
     }
 }
