@@ -137,13 +137,16 @@ class incluir_produto {
 
     public function salvar() {
 		if(count($_POST) > 0) {
+			$preco = str_replace('.', '', $_POST['preco']);
+			$preco = str_replace(',', '.', $preco);
+
 			$temp = [];
 			$temp['produto'] 		= $_POST['produto'];
 			$temp['marca'] 			= $_POST['marca'];
 			$temp['modelo'] 		= $_POST['modelo'];
 			$temp['cor'] 			= $_POST['cor'];
 			$temp['ano'] 			= str_replace('.', '', $_POST['ano']);
-			$temp['preco'] 			= $_POST['preco'];
+			$temp['preco'] 			= $preco;
 			$temp['quantidade'] 	= $_POST['quantidade'];
 			$temp['fabricacao'] 	= $_POST['fabricacao'];
 			$temp['id_fornecedor'] 	= $_POST['id_fornecedor'];
@@ -156,13 +159,16 @@ class incluir_produto {
 
     public function editar($id) {
 		if(count($_POST) > 0) {
+			$preco = str_replace('.', '', $_POST['preco']);
+			$preco = str_replace(',', '.', $preco);
+
 			$temp = [];
 			$temp['produto'] 		= $_POST['produto'];
 			$temp['marca'] 			= $_POST['marca'];
 			$temp['modelo'] 		= $_POST['modelo'];
 			$temp['cor'] 			= $_POST['cor'];
 			$temp['ano'] 			= str_replace('.', '', $_POST['ano']);
-			$temp['preco'] 			= $_POST['preco'];
+			$temp['preco'] 			= $preco;
 			$temp['quantidade'] 	= $_POST['quantidade'];
 			$temp['fabricacao'] 	= $_POST['fabricacao'];
 			$temp['id_fornecedor'] 	= $_POST['id_fornecedor'];

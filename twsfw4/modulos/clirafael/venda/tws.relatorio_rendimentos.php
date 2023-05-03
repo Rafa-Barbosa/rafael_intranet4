@@ -70,6 +70,12 @@ class relatorio_rendimentos {
             }
 
             $dados = $this->getDados($filtro['data_ini'], $filtro['data_fim']);
+
+            $cor = ($this->_rendimento > 0) ? 'primary' : (($this->_rendimento == 0) ? 'info' : 'danger');
+
+            $ret .= "<div class='alert alert-$cor' role='alert' style='text-align: center;'><h4><b>R$ $this->_rendimento</b> - Período <b>".datas::dataS2D($filtro['data_ini'])."</b> até <b>".datas::dataS2D($filtro['data_fim'])."</b></h4></div>";
+        } else {
+            $ret .= "<div class='alert alert-secondary' role='alert' style='text-align: center;'><h4>Selecione um período</h4></div>";
         }
         $this->_tabela->setDados($dados);
 
@@ -79,10 +85,6 @@ class relatorio_rendimentos {
             'onclick' => "setLocation('" . getLink() . "index&filtrar=1')",
         );
         $this->_tabela->addBotaoTitulo($param);
-
-        $cor = ($this->_rendimento > 0) ? 'primary' : 'danger';
-
-        $ret .= "<div class='alert alert-$cor' role='alert' style='text-align: center;'><h4><b>R$ $this->_rendimento</b> - Período <b>".datas::dataS2D($filtro['data_ini'])."</b> até <b>".datas::dataS2D($filtro['data_fim'])."</b></h4></div>";
         
         $ret .= $this->_tabela;
         
@@ -117,7 +119,7 @@ class relatorio_rendimentos {
                 $temp = [];
                 $temp['data'] = $row['data'];
                 $temp['participante'] = $fornecedores[$row['id_fornecedor']];
-                $temp['saida'] = number_format($row['custo'], 2, ',', '.');
+                $temp['saida'] = 'R$ ' . number_format($row['custo'], 2, ',', '.');
                 $temp['entrada'] = '-';
                 $ret[] = $temp;
 
@@ -140,7 +142,7 @@ class relatorio_rendimentos {
                 $temp['data'] = $row['data'];
                 $temp['participante'] = $clientes[$row['cliente']];
                 $temp['saida'] = '-';
-                $temp['entrada'] = number_format($row['valor'], 2, ',', '.');
+                $temp['entrada'] = 'R$ ' . number_format($row['valor'], 2, ',', '.');
                 $ret[] = $temp;
 
                 $entrada += $row['valor'];
@@ -148,11 +150,16 @@ class relatorio_rendimentos {
         }
 
         $temp = [];
-        $temp['saida'] = '<b>' . number_format($saida, 2, ',', '.') . '</b>';
-        $temp['entrada'] = '<b>' . number_format($entrada, 2, ',', '.') . '</b>';
+        $temp['saida'] = '<b>R$ ' . number_format($saida, 2, ',', '.') . '</b>';
+        $temp['entrada'] = '<b>R$ ' . number_format($entrada, 2, ',', '.') . '</b>';
         $ret[] = $temp;
 
         $this->_rendimento = number_format($entrada - $saida, 2, ',', '.');
+
+        $temp = [];
+        $temp['saida'] = "<b>TOTAL</b>";
+        $temp['entrada'] = '<b>R$ ' . $this->_rendimento . '</b>';
+        $ret[] = $temp;
 
         return $ret;
     }

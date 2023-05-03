@@ -97,7 +97,7 @@ class fornecedores {
         $this->_tabela->addColuna(array('campo' => 'telefone', 'etiqueta' => 'Telefone', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'email', 'etiqueta' => 'E-mail', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'rua', 'etiqueta' => 'Rua', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
-        $this->_tabela->addColuna(array('campo' => 'nr', 'etiqueta' => 'N°', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
+        $this->_tabela->addColuna(array('campo' => 'nr', 'etiqueta' => 'N°', 'tipo' => 'N', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'estado', 'etiqueta' => 'Estado', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'cep', 'etiqueta' => 'CEP', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
     }
@@ -172,7 +172,7 @@ class fornecedores {
     private function adicionaJs() {
         addPortaljavaScript("function confirmar(nome, id) {
             var get = id + '|' + nome;
-            var res = confirm('Esta ação irá excluir o cliente '+nome+' permanentemente. Deseja continuar?');
+            var res = confirm('Esta ação irá excluir o fornecedor '+nome+' permanentemente. Deseja continuar?');
             if(res) {
                 window.location.href = '".getLink() . "excluir&id='+get+'&excluir=1';
             } else {

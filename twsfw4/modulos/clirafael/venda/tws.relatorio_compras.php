@@ -36,7 +36,6 @@ class relatorio_compras {
     function __construct() {
         $param = [];
 		$param['width'] = 'AUTO';
-
 		$param['ordenacao'] = true;
 		$param['titulo'] = 'Compras';
 		$this->_tabela = new tabela01($param);
@@ -48,15 +47,19 @@ class relatorio_compras {
 		$param['tamanho'] = 12;
 		$param['colunas'] = 1;
 		$param['layout'] = 'horizontal';
+        $param['link'] = getLink() . 'index';
 		$this->_filtro = new formFiltro01($programa, $param);
     }
 
     public function index() {
         $ret = '';
+        $filtrar = $_GET['filtrar'] ?? 0;
 
         $filtro = $this->_filtro->getFiltro();
-
-        $ret .= $this->_filtro;
+        
+        if(empty($filtro['data_ini']) || $filtrar) {
+            $ret .= $this->_filtro;
+        }
 
         // =========== MONTA E APRESENTA A TABELA =================
         $this->montaColunas();
@@ -67,8 +70,15 @@ class relatorio_compras {
         $this->_tabela->setDados($dados);
 
         $param = array(
+            'texto' => 'Filtrar',
+            'cor'   => 'padrão',
+            'onclick' => "setLocation('" . getLink() . "index&filtrar=1')",
+        );
+        $this->_tabela->addBotaoTitulo($param);
+
+        $param = array(
             'texto' => 'Nova compra',
-            'cor'   => 'success',
+            'cor'   => 'padrão',
             'onclick' => "setLocation('" . getLink() . "vender.incluir')",
         );
         $this->_tabela->addBotaoTitulo($param);
@@ -80,7 +90,7 @@ class relatorio_compras {
             'width' => 100, //Tamanho do botão
             'flag' => '',
             'tamanho' => 'pequeno', //Nenhum fez diferença?
-            'cor' => 'padrão', //padrão: azul; danger: vermelho; success: verde
+            'cor' => 'success', //padrão: azul; danger: vermelho; success: verde
             'pos' => 'F',
         );
         $this->_tabela->addAcao($param);
@@ -125,7 +135,7 @@ class relatorio_compras {
                     $sql = "SELECT nome_fantasia FROM pm_fornecedores WHERE id = ".$row['id_fornecedor'];
                     $forn = query($sql);
 
-                    $fornecedores[$row['id_fornecedor']] = $forn[0]['nome_fantasia'];
+                    $fornecedores[$row['id_fornecedor']] = $forn[0]['nome_fantasia'] ?? '';
                 }
 
                 $temp = [];

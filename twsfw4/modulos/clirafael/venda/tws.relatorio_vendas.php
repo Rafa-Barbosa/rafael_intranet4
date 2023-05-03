@@ -22,6 +22,7 @@ class relatorio_vendas {
 		'avisos'			=> true,
         'detalhado'         => true,
         'vender'            => true,
+        'ajax'              => true,
     );
 
     // variavel que armazena a classe tabela01
@@ -48,15 +49,19 @@ class relatorio_vendas {
 		$param['tamanho'] = 12;
 		$param['colunas'] = 1;
 		$param['layout'] = 'horizontal';
+        $param['link'] = getLink() . 'index';
 		$this->_filtro = new formFiltro01($programa, $param);
     }
 
     public function index() {
         $ret = '';
+        $filtrar = $_GET['filtrar'] ?? 0;
 
         $filtro = $this->_filtro->getFiltro();
 
-        $ret .= $this->_filtro;
+        if(empty($filtro['data_ini']) || $filtrar) {
+            $ret .= $this->_filtro;
+        }
         
         // =========== MONTA E APRESENTA A TABELA =================
         $this->montaColunas();
@@ -67,8 +72,15 @@ class relatorio_vendas {
         $this->_tabela->setDados($dados);
 
         $param = array(
+            'texto' => 'Filtrar',
+            'cor'   => 'padrão',
+            'onclick' => "setLocation('" . getLink() . "index&filtrar=1')",
+        );
+        $this->_tabela->addBotaoTitulo($param);
+
+        $param = array(
             'texto' => 'Nova venda',
-            'cor'   => 'success',
+            'cor'   => 'padrão',
             'onclick' => "setLocation('" . getLink() . "vender.incluir')",
         );
         $this->_tabela->addBotaoTitulo($param);
@@ -80,7 +92,7 @@ class relatorio_vendas {
             'width' => 100, //Tamanho do botão
             'flag' => '',
             'tamanho' => 'pequeno', //Nenhum fez diferença?
-            'cor' => 'padrão', //padrão: azul; danger: vermelho; success: verde
+            'cor' => 'success', //padrão: azul; danger: vermelho; success: verde
             'pos' => 'F',
         );
         $this->_tabela->addAcao($param);
@@ -177,6 +189,13 @@ class relatorio_vendas {
                     </thead>
                     <tbody>';
         if(is_array($rows) && count($rows) > 0) {
+            $html .= '<tr>
+                        <th>Produto</th>
+                        <th>Quantidade</th>
+                        <th>Desconto por porcentagem</th>
+                        <th>Desconto por valor</th>
+                        <th>Valor</th>
+                    </tr>';
             foreach($rows as $row) {
                 if(!isset($produtos[$row['produto']]) && $row['produto'] != 0) {
                     $sql = "SELECT produto FROM pm_produtos WHERE id = ".$row['produto'];
@@ -185,11 +204,11 @@ class relatorio_vendas {
                     $produtos[$row['produto']] = $produto[0][0];
                 }
                 $html .= '<tr>
-                            <td><strong>Produto:</strong> '.$produtos[$row['produto']].'</td>
-                            <td><strong>Quantidade:</strong> '.$row['quantidade'].'</td>
-                            <td><strong>Desconto por porcentagem:</strong> '.$row['desconto_porcentagem'].'%</td>
-                            <td><strong>Desconto por valor:</strong> R$ '.number_format($row['desconto_valor'], 2, ',', '.').'</td>
-                            <td><strong>Valor: </strong>'.number_format($row['valor'], 2, ',', '.').'</td>
+                            <td>'.$produtos[$row['produto']].'</td>
+                            <td>'.$row['quantidade'].'</td>
+                            <td>'.$row['desconto_porcentagem'].'%</td>
+                            <td>R$ '.number_format($row['desconto_valor'], 2, ',', '.').'</td>
+                            <td>R$ '.number_format($row['valor'], 2, ',', '.').'</td>
                         </tr>';
             }
         }
@@ -214,4 +233,26 @@ class relatorio_vendas {
 
         return $ret;
     }
+
+    public function ajax() {
+	    $ret = array();
+	    
+	    $ret[] = array('valor' => '', 'etiqueta' => '');
+	    $id = getParam($_GET, 'id', '');
+	    
+	    if($id != ''){
+	        $sql = "SELECT preco FROM pm_produtos WHERE id = $id";
+	        $rows = query($sql);
+	        if(is_array($rows) && count($rows) > 0){
+	            foreach ($rows as $row){
+	                $temp = array(
+	                    'valor' => $row['preco'],
+	                    'etiqueta' => 'valor',
+	                );
+	                $ret[] = $temp;
+	            }
+	        }
+	    }
+	    return json_encode($ret);
+	}
 }

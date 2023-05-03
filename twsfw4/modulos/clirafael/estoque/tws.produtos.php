@@ -93,14 +93,14 @@ class produtos {
 	}
 
     private function montaColunas() {
-        $this->_tabela->addColuna(array('campo' => 'id', 'etiqueta' => 'ID#', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
+        $this->_tabela->addColuna(array('campo' => 'id', 'etiqueta' => 'ID#', 'tipo' => 'N', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'produto', 'etiqueta' => 'Produto', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'marca', 'etiqueta' => 'Marca', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'modelo', 'etiqueta' => 'Modelo', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'cor', 'etiqueta' => 'Cor', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'ano', 'etiqueta' => 'Ano', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
-        $this->_tabela->addColuna(array('campo' => 'preco', 'etiqueta' => 'Preço', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
-        $this->_tabela->addColuna(array('campo' => 'quantidade', 'etiqueta' => 'Quantidade', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
+        $this->_tabela->addColuna(array('campo' => 'preco', 'etiqueta' => 'Preço', 'tipo' => 'V', 'width' => 100, 'posicao' => 'E'));
+        $this->_tabela->addColuna(array('campo' => 'quantidade', 'etiqueta' => 'Quantidade', 'tipo' => 'N', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'fabricacao', 'etiqueta' => 'Fabricação', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'fornecedor', 'etiqueta' => 'Fornecedor', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
     }
@@ -176,7 +176,7 @@ class produtos {
     private function adicionaJs() {
         addPortaljavaScript("function confirmar(nome, id) {
             var get = id + '|' + nome;
-            var res = confirm('Esta ação irá excluir o cliente '+nome+' permanentemente. Deseja continuar?');
+            var res = confirm('Esta ação irá excluir o produto '+nome+' permanentemente. Deseja continuar?');
             if(res) {
                 window.location.href = '".getLink() . "excluir&id='+get+'&excluir=1';
             } else {
