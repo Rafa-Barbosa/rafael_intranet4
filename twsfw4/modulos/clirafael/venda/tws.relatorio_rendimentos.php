@@ -149,6 +149,10 @@ class relatorio_rendimentos {
             }
         }
 
+        usort($ret, function($a, $b) {
+            return strtotime($a['data']) - strtotime($b['data']);
+        });
+
         $temp = [];
         $temp['saida'] = '<b>R$ ' . number_format($saida, 2, ',', '.') . '</b>';
         $temp['entrada'] = '<b>R$ ' . number_format($entrada, 2, ',', '.') . '</b>';
