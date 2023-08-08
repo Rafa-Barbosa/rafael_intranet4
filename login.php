@@ -11,10 +11,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
 <link rel="stylesheet" href="<?php echo $config['raizS3'];?>css/adminlte.min.css">
 	</head>
-<body class="hold-transition login-page" style="background: url('<?php echo $config['raizS3'];?>imagens/trilhas.jpeg'); background-size: cover;">
+<body class="hold-transition login-page" style="background: url('<?php echo $config['raizS3'];?>imagens/fundo.jpg'); background-size: cover;">
 <div class="login-box">
   <div class="login-logo">
-    <span style="color: #CCCCCC; font-weight: bold; font-size: x-large;">Eh us guri | Rafael Barbosa |</span>
+    <span style="color: #CCCCCC; font-weight: bold; font-size: x-large;">Central Pneus | Rafael Barbosa |</span>
   </div>
   <!-- /.login-logo -->
   <div class="card">
