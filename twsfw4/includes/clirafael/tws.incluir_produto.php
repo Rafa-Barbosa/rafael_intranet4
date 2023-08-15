@@ -68,15 +68,15 @@ class incluir_produto {
 		$param['valor'] = $row[0]['cor'] ?? '';
         $this->_form->addCampo($param);
 
-		$param = [];
-        $param['campo'] = 'ano';
-		$param['etiqueta'] = 'Ano';
-		$param['largura'] = '2';
-		$param['tipo'] = 'N';
-		$param['mascara'] = 'N';
-		// $param['obrigatorio'] = true;
-		$param['valor'] = $row[0]['ano'] ?? '';
-        $this->_form->addCampo($param);
+		// $param = [];
+        // $param['campo'] = 'ano';
+		// $param['etiqueta'] = 'Ano';
+		// $param['largura'] = '2';
+		// $param['tipo'] = 'N';
+		// $param['mascara'] = 'N';
+		// // $param['obrigatorio'] = true;
+		// $param['valor'] = $row[0]['ano'] ?? '';
+        // $this->_form->addCampo($param);
 
         $param = [];
         $param['campo'] = 'preco';

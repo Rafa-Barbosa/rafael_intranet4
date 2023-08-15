@@ -39,7 +39,7 @@ class incluir_fornecedor {
 		$param['largura'] = '2';
 		$param['tipo'] = 'C';
 		$param['obrigatorio'] = true;
-        // $param['pasta'] = 1;
+        $param['pasta'] = 1;
 		$param['valor'] = $row[0]['nome_fantasia'] ?? '';
 		$this->_form->addCampo($param);
 
@@ -49,25 +49,18 @@ class incluir_fornecedor {
 		$param['largura'] = '2';
 		$param['tipo'] = 'C';
 		$param['obrigatorio'] = true;
+		$param['pasta'] = 1;
 		$param['valor'] = $row[0]['razao_social'] ?? '';
         $this->_form->addCampo($param);
 
-        $param = [];
-        $param['campo'] = 'telefone';
-		$param['etiqueta'] = 'Telefone';
+		$param = [];
+        $param['campo'] = 'cpf_cnpj';
+		$param['etiqueta'] = 'CPF/CNPJ';
 		$param['largura'] = '2';
 		$param['tipo'] = 'C';
 		$param['obrigatorio'] = true;
-		$param['valor'] = $row[0]['telefone'] ?? '';
-        $this->_form->addCampo($param);
-
-        $param = [];
-        $param['campo'] = 'email';
-		$param['etiqueta'] = 'E-mail';
-		$param['largura'] = '2';
-		$param['tipo'] = 'C';
-		$param['obrigatorio'] = true;
-		$param['valor'] = $row[0]['email'] ?? '';
+		$param['pasta'] = 1;
+		$param['valor'] = $row[0]['cpf_cnpj'] ?? '';
         $this->_form->addCampo($param);
 
 		$param = [];
@@ -76,6 +69,7 @@ class incluir_fornecedor {
 		$param['largura'] = '2';
 		$param['tipo'] = 'C';
 		$param['obrigatorio'] = true;
+		$param['pasta'] = 2;
 		$param['valor'] = $row[0]['rua'] ?? '';
         $this->_form->addCampo($param);
 
@@ -86,7 +80,28 @@ class incluir_fornecedor {
 		$param['tipo'] = 'N';
 		$param['mascara'] = 'N';
 		$param['obrigatorio'] = true;
+		$param['pasta'] = 2;
 		$param['valor'] = $row[0]['nr'] ?? '';
+        $this->_form->addCampo($param);
+
+		$param = [];
+        $param['campo'] = 'bairro';
+		$param['etiqueta'] = 'Bairro';
+		$param['largura'] = '2';
+		$param['tipo'] = 'C';
+		$param['obrigatorio'] = true;
+		$param['pasta'] = 2;
+		$param['valor'] = $row[0]['bairro'] ?? '';
+        $this->_form->addCampo($param);
+
+		$param = [];
+        $param['campo'] = 'municipio';
+		$param['etiqueta'] = 'Município';
+		$param['largura'] = '2';
+		$param['tipo'] = 'C';
+		$param['obrigatorio'] = true;
+		$param['pasta'] = 2;
+		$param['valor'] = $row[0]['municipio'] ?? '';
         $this->_form->addCampo($param);
 
 		$param = [];
@@ -95,6 +110,7 @@ class incluir_fornecedor {
 		$param['largura'] = '2';
 		$param['tipo'] = 'C';
 		$param['obrigatorio'] = true;
+		$param['pasta'] = 2;
 		$param['valor'] = $row[0]['estado'] ?? '';
         $this->_form->addCampo($param);
 
@@ -104,10 +120,42 @@ class incluir_fornecedor {
 		$param['largura'] = '2';
 		$param['tipo'] = 'C';
 		$param['obrigatorio'] = true;
+		$param['pasta'] = 2;
 		$param['valor'] = $row[0]['cep'] ?? '';
         $this->_form->addCampo($param);
 
+		$param = [];
+        $param['campo'] = 'pais';
+		$param['etiqueta'] = 'País';
+		$param['largura'] = '2';
+		$param['tipo'] = 'C';
+		$param['obrigatorio'] = true;
+		$param['pasta'] = 2;
+		$param['valor'] = $row[0]['pais'] ?? '';
+        $this->_form->addCampo($param);
+
+		$param = [];
+        $param['campo'] = 'telefone';
+		$param['etiqueta'] = 'Telefone';
+		$param['largura'] = '4';
+		$param['tipo'] = 'C';
+		$param['obrigatorio'] = true;
+		$param['pasta'] = 3;
+		$param['valor'] = $row[0]['telefone'] ?? '';
+        $this->_form->addCampo($param);
+
+        $param = [];
+        $param['campo'] = 'email';
+		$param['etiqueta'] = 'E-mail';
+		$param['largura'] = '4';
+		$param['tipo'] = 'C';
+		// $param['obrigatorio'] = true;
+		$param['pasta'] = 3;
+		$param['valor'] = $row[0]['email'] ?? '';
+        $this->_form->addCampo($param);
+
         $this->_form->setEnvio(getLink() . "salvar&id=$id", 'formIncluir_fornecedor');
+		$this->_form->setPastas([1 => 'Dados Gerais', 2 => 'Endereço', 3 => 'Contato']);
 
         $ret .= $this->_form;
 

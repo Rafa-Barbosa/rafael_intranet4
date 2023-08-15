@@ -89,11 +89,10 @@ class clientes {
 	}
 
     private function montaColunas() {
-        $this->_tabela->addColuna(array('campo' => 'id', 'etiqueta' => 'ID#', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'nome', 'etiqueta' => 'Nome', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
-        $this->_tabela->addColuna(array('campo' => 'sobrenome', 'etiqueta' => 'Sobrenome', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'aniversario', 'etiqueta' => 'Aniversário', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'contato', 'etiqueta' => 'Contato', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
+        $this->_tabela->addColuna(array('campo' => 'ativo', 'etiqueta' => 'Ativo', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
     }
 
     private function getDados() {
@@ -107,9 +106,9 @@ class clientes {
                 $temp = [];
                 $temp['id'] = $row['id'];
                 $temp['nome'] = $row['nome'];
-                $temp['sobrenome'] = $row['sobrenome'];
                 $temp['aniversario'] = datas::dataS2D($row['aniversario']);
-                $temp['contato'] = $row['contato'];
+                $temp['contato'] = $row['telefone'];
+                $temp['ativo'] = ($row['ativo'] == 'S') ? 'Sim' : 'Não';
 
                 $ret[] = $temp;
             }
