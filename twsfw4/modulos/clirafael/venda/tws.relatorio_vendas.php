@@ -87,8 +87,8 @@ class relatorio_vendas {
 
         $param = array(
             'texto' => 'Detalhado', //Texto no botão
-            'link' => getLink() . 'detalhado&venda=', //Link da página para onde o botão manda
-            'coluna' => ['id', 'data', 'cliente', 'valor'], //Coluna impressa no final do link
+            'link' => getLink() . 'detalhado&id=', //Link da página para onde o botão manda
+            'coluna' => 'id', //Coluna impressa no final do link
             'width' => 100, //Tamanho do botão
             'flag' => '',
             'tamanho' => 'pequeno', //Nenhum fez diferença?
@@ -115,9 +115,10 @@ class relatorio_vendas {
     }
 
     private function montaColunas() {
-        $this->_tabela->addColuna(array('campo' => 'data', 'etiqueta' => 'Data', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
+        $this->_tabela->addColuna(array('campo' => 'data', 'etiqueta' => 'Data', 'tipo' => 'D', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'cliente', 'etiqueta' => 'Cliente', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
-        $this->_tabela->addColuna(array('campo' => 'valor', 'etiqueta' => 'Valor', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
+        $this->_tabela->addColuna(array('campo' => 'valor', 'etiqueta' => 'Valor', 'tipo' => 'V', 'width' => 100, 'posicao' => 'E'));
+        $this->_tabela->addColuna(array('campo' => 'forma_pagamento', 'etiqueta' => 'Forma de Pagamento', 'tipo' => 'T', 'width' => 200, 'posicao' => 'E'));
     }
 
     private function getDados($data_ini, $data_fim) {
@@ -127,24 +128,19 @@ class relatorio_vendas {
             $data_fim =date('Ymd');
         }
 
-        $sql = "SELECT * FROM pm_venda WHERE data >= '$data_ini' AND data <= '$data_fim'";
+        $sql = "SELECT pm_venda.*, pm_clientes.nome AS nome_cliente FROM pm_venda
+                LEFT JOIN pm_clientes ON pm_venda.cliente = pm_clientes.id
+                WHERE pm_venda.data >= '$data_ini' AND pm_venda.data <= '$data_fim'";
         $rows = query($sql);
 
-        $clientes = [];
         if(is_array($rows) && count($rows) > 0) {
             foreach($rows as $row) {
-                if(!isset($clientes[$row['cliente']]) && $row['cliente'] != 0) {
-                    $sql = "SELECT nome FROM pm_clientes WHERE id = ".$row['cliente'];
-                    $cliente = query($sql);
-
-                    $clientes[$row['cliente']] = $cliente[0][0];
-                }
-
                 $temp = [];
-                $temp['id'] = $row['id'];
-                $temp['data'] = datas::dataS2D($row['data']);
-                $temp['cliente'] = $clientes[$row['cliente']] ?? '';
-                $temp['valor'] = number_format($row['valor'], 2, ',', '.');
+                $temp['id']                 = $row['id'];
+                $temp['data']               = $row['data'];
+                $temp['cliente']            = $row['nome_cliente'] ?? '';
+                $temp['valor']              = $row['valor'];
+                $temp['forma_pagamento']    = $row['forma_pagamento'];
 
                 $ret[] = $temp;
             }
@@ -154,9 +150,9 @@ class relatorio_vendas {
     }
 
     public function detalhado() {
-        $this->_venda = explode('|', $_GET['venda']);
+        $id = $_GET['id'];
 
-        $html = $this->geraHtml($this->_venda[0]);
+        $html = $this->geraHtml($id);
 
         $param = array();
         $p = array();
@@ -173,18 +169,22 @@ class relatorio_vendas {
     }
 
     private function geraHtml($id) {
-        $produtos = [];
-        $produtos['0'] = 'não informado';
-
-        $sql = "SELECT * FROM pm_venda_itens WHERE id_venda = $id";
+        $sql = "SELECT itens.quantidade, itens.desconto_porcentagem, itens.desconto_valor, itens.valor AS valor_item,
+                venda.data, venda.valor AS valor_total, venda.forma_pagamento, cliente.nome, produto.produto
+                FROM pm_venda_itens AS itens
+                LEFT JOIN pm_venda AS venda ON venda.id = itens.id_venda
+                LEFT JOIN pm_clientes AS cliente ON cliente.id = venda.cliente
+                LEFT JOIN pm_produtos AS produto ON produto.id = itens.produto
+                WHERE itens.id_venda = $id";
         $rows = query($sql);
 
         $html = '<table class="table">
                     <thead class="thead-dark">
                         <tr>
-                            <th>Data: '.$this->_venda[1].'</th>
-                            <th colspan="2">Cliente: '.$this->_venda[2].'</th>
-                            <th colspan="2">Valor Total: R$ '.$this->_venda[3].'</th>
+                            <th>Data: '.Datas::dataS2D($rows[0]['data']).'</th>
+                            <th colspan="2">Cliente: '.$rows[0]['nome'].'</th>
+                            <th>Valor Total: R$ '.number_format($rows[0]['valor_total'], 2, ',', '.').'</th>
+                            <th>Forma de Pagamento: '.$rows[0]['forma_pagamento'].'</th>
                         </tr>
                     </thead>
                     <tbody>';
@@ -197,18 +197,12 @@ class relatorio_vendas {
                         <th>Valor</th>
                     </tr>';
             foreach($rows as $row) {
-                if(!isset($produtos[$row['produto']]) && $row['produto'] != 0) {
-                    $sql = "SELECT produto FROM pm_produtos WHERE id = ".$row['produto'];
-                    $produto = query($sql);
-
-                    $produtos[$row['produto']] = $produto[0][0];
-                }
                 $html .= '<tr>
-                            <td>'.$produtos[$row['produto']].'</td>
+                            <td>'.$row['produto'].'</td>
                             <td>'.$row['quantidade'].'</td>
                             <td>'.$row['desconto_porcentagem'].'%</td>
                             <td>R$ '.number_format($row['desconto_valor'], 2, ',', '.').'</td>
-                            <td>R$ '.number_format($row['valor'], 2, ',', '.').'</td>
+                            <td>R$ '.number_format($row['valor_item'], 2, ',', '.').'</td>
                         </tr>';
             }
         }

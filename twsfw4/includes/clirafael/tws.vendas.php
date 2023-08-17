@@ -30,11 +30,13 @@ class vendas {
 
 		if(!empty($itens)) {
 			$cliente = $itens['cliente'];
+			$forma_pagamento = $itens['forma_pagamento'];
 			$total = $itens['total'];
 			$itens = $itens['formOS'];
 		} else {
 			$total = 'Total';
 			$cliente = '';
+			$forma_pagamento = '';
 		}
 
 		$param = [];
@@ -46,6 +48,17 @@ class vendas {
 		// $param['obrigatorio'] = true;
         $param['pasta'] = 1;
 		$param['valor'] = $cliente;
+		$form->addCampo($param);
+
+		$param = [];
+		$param['campo'] = 'forma_pagamento';
+		$param['etiqueta'] = 'Forma de Pagamento';
+		$param['largura'] = '2';
+		$param['tipo'] = 'A';
+        $param['opcoes'] = "Cartão=Cartão;Dinheiro=Dinheiro";
+		// $param['obrigatorio'] = true;
+        $param['pasta'] = 1;
+		$param['valor'] = $forma_pagamento;
 		$form->addCampo($param);
 
 		$form->addConteudoPastas(1, $this->getTabelaItens($total, $itens));
@@ -194,10 +207,11 @@ class vendas {
 			$total = str_replace(',', '.', $total);
 
 			$param = [];
-			$param['id'] = $id;
-			$param['data'] = date('Ymd');
-			$param['cliente'] = $_POST['cliente'] ?? null;
-			$param['valor'] = $total;
+			$param['id'] 				= $id;
+			$param['data'] 				= date('Ymd');
+			$param['cliente'] 			= $_POST['cliente'] ?? null;
+			$param['valor'] 			= $total;
+			$param['forma_pagamento'] 	= $_POST['forma_pagamento'];
 			$sql = montaSQL($param, 'pm_venda');
 			query($sql);
 
