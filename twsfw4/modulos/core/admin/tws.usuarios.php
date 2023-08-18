@@ -70,10 +70,10 @@ class usuarios{
 	}
 	
 
-	public function editar(){
+	public function editar($id = ''){
 		$ret = '';
 		
-		$id = base64_decode(getParam($_GET, 'usuario'));
+		$id = empty($id) ? base64_decode(getParam($_GET, 'usuario')) : $id;
 		$dados = $this->_syscad->getDadosID($id);
 //echo "ID: $id<br>\n";
 //print_r($dados);
@@ -110,7 +110,7 @@ class usuarios{
 			}
 		}
 		unset($estruturaTemp);
-//print_r($estrutura);
+// print_r($estrutura);
 		foreach ($estrutura as $est){
 			$form1->addCampo($est);
 		}
@@ -124,10 +124,10 @@ class usuarios{
 		
 
 		
-		$form1->addConteudoPastas(3, $this->montaFormPermissoes(''));
+		$form1->addConteudoPastas(3, $this->montaFormPermissoes($id));
 		$form1->addConteudoPastas(4, $this->montaFormAcoes(''));
 		
-		$form1->setEnvio(getLink() . 'salvarUsuario.incluir', 'formUser');
+		$form1->setEnvio(getLink() . "salvarUsuario.incluir&id=$id", 'formUser');
 
 		$param = [];
 		$param['icone'] = 'fa-edit';
@@ -294,7 +294,7 @@ class usuarios{
 				$sql .= " AND nivel < 900";
 			}
 		}
-		//echo "SQL: $sql <br>";
+		// echo "SQL: $sql <br>";
 		$rows = query($sql);
 		if(count($rows) > 0){
 			$i = 0;
@@ -323,20 +323,22 @@ class usuarios{
 				$i++;
 			}
 		}
-		//print_r($ret);
+		// print_r($ret);
 		return $ret;
 	}
 	
 	function getProgramasUsuarios($usuario, $modulo = ""){
 		$ret = [];
+		$usuario_atual = getUsuario();
 		$sql  = "SELECT app002.programa, app002.etiqueta, perm, app002.modulo FROM app002 ";
 		$sql .= "LEFT JOIN sys115 ON app002.programa = sys115.programa AND sys115.user = '$usuario'  ";
 		$sql .= "WHERE app002.ativo = 'S' ";
+		$sql .= "AND (SELECT COUNT(*) FROM sys115 AS s WHERE s.programa = app002.programa AND s.user = '$usuario_atual' AND s.perm = 'S') > 0";
 		if($modulo != ""){
 			$sql .= " AND app002.modulo = '$modulo' ";
 		}
 		// Se o usuário que está operando não for Super e o alterado tb não for Super
-		//echo "SQL: $sql <br>";
+		// echo "SQL: $sql <br>\n";
 		$rows = query($sql);
 		
 		if(count($rows) > 0){
@@ -358,7 +360,85 @@ class usuarios{
 	
 	//---------------------------------------------------------------------------------------------------- SET ------------------------
 	
-	
+	function salvarUsuario() {
+		$id = $_GET['id'] ?? '';
+
+		if(empty($_POST['formUser']['senha1'])) {
+			addPortalMensagem("Preencha o campo senha", 'error');
+			return $this->editar($id);
+		}
+		if($_POST['formUser']['senha1'] != $_POST['formUser']['senha2']) {
+			addPortalMensagem("Digite a confirmação de senha corretamente", 'error');
+			// die("opera: $id");
+			$ret = !empty($id) ? $this->editar($id) : $this->incluir();
+			return $ret;
+		}
+		// print_r($_POST);
+
+		$temp = [];
+		if(!empty($id)) {
+			$tipo = 'UPDATE';
+			$where = "user = '{$_POST['user']}'";
+		} else {
+			$tipo = 'INSERT';
+			$where = '';
+
+			$temp['user'] = $_POST['user'];
+		}
+
+		$temp['origem'] = 'I';
+		$temp['email'] = $_POST['email'];
+		$temp['senha'] = $_POST['formUser']['senha1'];
+		$temp['nivel'] = 500;
+		$temp['nome'] = $_POST['nome'];
+		$temp['apelido'] = $_POST['apelido'];
+		$temp['depto'] = $_POST['depto'];
+		$temp['cargo'] = $_POST['cargo'];
+		$temp['inicial'] = $_POST['inicial'];
+		$temp['cod_cliente'] = $_POST['cod_cliente'];
+		$temp['cod_fornecedor'] = $_POST['cod_fornecedor'];
+		$temp['cod_recurso'] = $_POST['cod_recurso'];
+		$temp['cod_vendedor'] = $_POST['cod_vendedor'];
+		$temp['tipo'] = $_POST['tipo'];
+		$temp['fone1'] = $_POST['fone1'];
+		$temp['fone2'] = $_POST['fone2'];
+		$temp['ativo'] = $_POST['ativo'];
+		$temp['dtcadastro'] = date("Y-m-d H:i:s");
+
+		$sql = montaSQL($temp, 'sys001', $tipo, $where);
+		query($sql);
+
+		$sql = "SELECT app002.programa AS nome_programa, s.* FROM app002
+				LEFT JOIN sys115 AS s ON s.programa = app002.programa AND s.user = '{$_POST['user']}'
+				WHERE app002.ativo = 'S'";
+		$rows = query($sql);
+
+		if(is_array($rows) && count($rows) > 0) {
+			foreach($rows as $row) {
+				$programa_k = str_replace('.', '__', $row['nome_programa']);
+				
+				$temp = [];
+				if(empty($row['programa'])) {
+					$tipo = 'INSERT';
+					$where = '';
+
+					$temp['user'] = $_POST['user'];
+					$temp['programa'] = $row['nome_programa'];
+				} else {
+					$tipo = 'UPDATE';
+					$where = "user = '{$_POST['user']}' AND programa = '{$row['nome_programa']}'";
+				}
+
+				$temp['perm'] = (isset($_POST['formUserAcessos'][$programa_k]) && $_POST['formUserAcessos'][$programa_k] == 'on') ? 'S' : 'N';
+
+				$sql = montaSQL($temp, 'sys115', $tipo, $where);
+				query($sql);
+			}
+		}
+
+		addPortalMensagem("Usuário {$_POST['nome']} registrado com sucesso");
+		return $this->index();
+	}
 }
 
 
