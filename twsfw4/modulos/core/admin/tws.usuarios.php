@@ -363,13 +363,8 @@ class usuarios{
 	function salvarUsuario() {
 		$id = $_GET['id'] ?? '';
 
-		if(empty($_POST['formUser']['senha1'])) {
-			addPortalMensagem("Preencha o campo senha", 'error');
-			return $this->editar($id);
-		}
 		if($_POST['formUser']['senha1'] != $_POST['formUser']['senha2']) {
 			addPortalMensagem("Digite a confirmação de senha corretamente", 'error');
-			// die("opera: $id");
 			$ret = !empty($id) ? $this->editar($id) : $this->incluir();
 			return $ret;
 		}
@@ -386,9 +381,12 @@ class usuarios{
 			$temp['user'] = $_POST['user'];
 		}
 
+		if(!empty($_POST['formUser']['senha1'])) {
+			$temp['senha'] = $_POST['formUser']['senha1'];
+		}
+
 		$temp['origem'] = 'I';
 		$temp['email'] = $_POST['email'];
-		$temp['senha'] = $_POST['formUser']['senha1'];
 		$temp['nivel'] = 500;
 		$temp['nome'] = $_POST['nome'];
 		$temp['apelido'] = $_POST['apelido'];
