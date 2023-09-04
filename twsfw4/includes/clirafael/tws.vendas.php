@@ -174,7 +174,7 @@ class vendas {
 					$valor_item = str_replace(['R$ ', '.'], '', $item['com_desconto']);
 					$valor_item = str_replace(',', '.', $valor_item);
 
-					$quantidade = !empty($item['quantidade']) ? $item['quantidade'] : 0;
+					$quantidade = !empty($item['quantidade']) ? $item['quantidade'] : 1;
 					$desconto_valor = !empty($item['desconto_valor']) ? $item['desconto_valor'] : 0;
 					$desconto_porcentagem = !empty($item['desconto_porcentagem']) ? $item['desconto_porcentagem'] : 0;
 

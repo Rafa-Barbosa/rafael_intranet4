@@ -40,7 +40,7 @@ class relatorio_rendimentos {
         $param['filtro'] = false;
 		$this->_tabela = new tabela01($param);
 
-        $programa = 'pm_venda';
+        $programa = 'pm_extrato';
 		$param = [];
 		$param['botaoTexto'] = 'Enviar';
 		$param['imprimePainel'] = false;
@@ -69,7 +69,7 @@ class relatorio_rendimentos {
                 $filtro['data_fim'] =date('Ymd');
             }
 
-            $dados = $this->getDados($filtro['data_ini'], $filtro['data_fim']);
+            $dados = $this->getDados($filtro['data_ini'], $filtro['data_fim'], $filtro['forma_pagamento']);
 
             $cor = ($this->_rendimento > 0) ? 'primary' : (($this->_rendimento == 0) ? 'info' : 'danger');
 
@@ -98,12 +98,14 @@ class relatorio_rendimentos {
         $this->_tabela->addColuna(array('campo' => 'entrada', 'etiqueta' => 'Entrada', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
     }
 
-    private function getDados($data_ini, $data_fim) {
+    private function getDados($data_ini, $data_fim, $forma_pagamento) {
         $ret = [];
         $fornecedores[0] = 'Fornecedor não informado';
         $clientes[0] = 'Cliente não informado';
         $saida = 0;
         $entrada = 0;
+
+        $where = ($forma_pagamento != 'todos') ? "AND forma_pagamento = '$forma_pagamento'" : '';
 
         $sql = "SELECT * FROM pm_compra WHERE data >= $data_ini AND data <= $data_fim";
         $rows = query($sql);
@@ -127,7 +129,7 @@ class relatorio_rendimentos {
             }
         }
 
-        $sql = "SELECT * FROM pm_venda WHERE data >= $data_ini AND data <= $data_fim";
+        $sql = "SELECT * FROM pm_venda WHERE data >= $data_ini AND data <= $data_fim $where";
         $rows = query($sql);
         if(is_array($rows) && count($rows) > 0) {
             foreach($rows as $row) {

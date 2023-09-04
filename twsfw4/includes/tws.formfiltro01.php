@@ -410,18 +410,18 @@ class formfiltro01{
 		$i = count($this->_perguntas);
 		$this->_perguntas[$i]['programa']		= $pergunta['programa'];
 		$this->_perguntas[$i]['ordem']			= $pergunta['ordem'];
-		$this->_perguntas[$i]['pergunta']		= $pergunta['pergunta'];
-		$this->_perguntas[$i]['variavel']		= $pergunta['variavel'];
-		$this->_perguntas[$i]['tipo']			= $pergunta['tipo'];
-		$this->_perguntas[$i]['tamanho']		= $pergunta['tamanho'];
-		$this->_perguntas[$i]['casadec']		= $pergunta['casadec'];
-		$this->_perguntas[$i]['validador']		= $pergunta['validador'];
-		$this->_perguntas[$i]['tabela']			= $pergunta['tabela'];
-		$this->_perguntas[$i]['funcaodados']	= $pergunta['funcaodados'];
-		$this->_perguntas[$i]['help']			= $pergunta['help'];
-		$this->_perguntas[$i]['inicializador']	= $pergunta['inicializador'];
+		$this->_perguntas[$i]['pergunta']		= $pergunta['pergunta'] ?? '';
+		$this->_perguntas[$i]['variavel']		= $pergunta['variavel'] ?? '';
+		$this->_perguntas[$i]['tipo']			= $pergunta['tipo'] ?? '';
+		$this->_perguntas[$i]['tamanho']		= $pergunta['tamanho'] ?? '';
+		$this->_perguntas[$i]['casadec']		= $pergunta['casadec'] ?? '';
+		$this->_perguntas[$i]['validador']		= $pergunta['validador'] ?? '';
+		$this->_perguntas[$i]['tabela']			= $pergunta['tabela'] ?? '';
+		$this->_perguntas[$i]['funcaodados']	= $pergunta['funcaodados'] ?? '';
+		$this->_perguntas[$i]['help']			= $pergunta['help'] ?? '';
+		$this->_perguntas[$i]['inicializador']	= $pergunta['inicializador'] ?? '';
 		$this->_perguntas[$i]['inicFunc']		= isset($pergunta['inicFunc']) ? $pergunta['inicFunc'] : '';
-		$this->_perguntas[$i]['opcoes']			= $pergunta['opcoes'];
+		$this->_perguntas[$i]['opcoes']			= $pergunta['opcoes'] ?? '';
 	}
 	
 	public function addBotaoTitulo($param){

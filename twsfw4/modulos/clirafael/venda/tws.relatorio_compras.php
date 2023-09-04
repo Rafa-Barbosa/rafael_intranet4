@@ -49,6 +49,15 @@ class relatorio_compras {
 		$param['layout'] = 'horizontal';
         $param['link'] = getLink() . 'index';
 		$this->_filtro = new formFiltro01($programa, $param);
+
+        // $param = [];
+        // $param['programa'] = $programa;
+        // $param['ordem'] = 4;
+        // $param['pergunta'] = 'Produto';
+        // $param['variavel'] = 'id_produto';
+        // $param['tipo'] = 'A';
+        // $param['']
+        // $this->_filtro->addPergunta($param);
     }
 
     public function index() {
