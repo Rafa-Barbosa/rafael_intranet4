@@ -427,6 +427,7 @@ class form01{
 		//Indica se deve aceitar valor negativo (ai vai usar o maskMoney)
 		$this->_campos[$pasta][$linha][$prox]['negativo']		= verificaParametro($param, 'negativo'		, false);
 		$this->_campos[$pasta][$linha][$prox]['idGroup']		= verificaParametro($param, 'idGroup'		, '');
+		$this->_campos[$pasta][$linha][$prox]['maxtamanho']		= verificaParametro($param, 'maxtamanho'		, '');
 		
 		//Se existe uma "tabela" com a lista
 		if(isset($param['tabela_itens']) && !empty($param['tabela_itens'])){
