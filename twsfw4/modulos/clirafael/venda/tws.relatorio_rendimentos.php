@@ -30,6 +30,12 @@ class relatorio_rendimentos {
     // Rendimento somado
     private $_rendimento;
 
+    // Identifica se será um relatório geral ou por produto
+    private $_relatorio_geal;
+
+    // Produto filtrado
+    private $_produto;
+
     function __construct() {
         $param = [];
 		$param['width'] = 'AUTO';
@@ -61,6 +67,8 @@ class relatorio_rendimentos {
             $ret .= $this->_filtro;
         }
 
+        $this->_relatorio_geal = (empty($filtro['id_produto']) || $filtro['id_produto'] == 0) ? true : false;
+
         // =========== MONTA E APRESENTA A TABELA =================
         $this->montaColunas();
         $dados = [];
@@ -69,11 +77,12 @@ class relatorio_rendimentos {
                 $filtro['data_fim'] =date('Ymd');
             }
 
-            $dados = $this->getDados($filtro['data_ini'], $filtro['data_fim'], $filtro['forma_pagamento']);
+            $dados = $this->_relatorio_geal ? $this->getDados($filtro) : $this->getDadosPorProduto($filtro);
 
             $cor = ($this->_rendimento > 0) ? 'primary' : (($this->_rendimento == 0) ? 'info' : 'danger');
+            $produto = $this->_relatorio_geal ? '' : " - Produto: <b>{$this->_produto}</b>";
 
-            $ret .= "<div class='alert alert-$cor' role='alert' style='text-align: center;'><h4><b>R$ $this->_rendimento</b> - Período <b>".datas::dataS2D($filtro['data_ini'])."</b> até <b>".datas::dataS2D($filtro['data_fim'])."</b></h4></div>";
+            $ret .= "<div class='alert alert-$cor' role='alert' style='text-align: center;'><h4><b>R$ $this->_rendimento</b> - Período <b>".datas::dataS2D($filtro['data_ini'])."</b> até <b>".datas::dataS2D($filtro['data_fim'])."</b>$produto</h4></div>";
         } else {
             $ret .= "<div class='alert alert-secondary' role='alert' style='text-align: center;'><h4>Selecione um período</h4></div>";
         }
@@ -93,57 +102,48 @@ class relatorio_rendimentos {
 
     private function montaColunas() {
         $this->_tabela->addColuna(array('campo' => 'data', 'etiqueta' => 'Data', 'tipo' => 'D', 'width' => 100, 'posicao' => 'E'));
-        $this->_tabela->addColuna(array('campo' => 'participante', 'etiqueta' => 'Participante', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
+        if($this->_relatorio_geal) {
+            $this->_tabela->addColuna(array('campo' => 'participante', 'etiqueta' => 'Participante', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
+        } else {
+            $this->_tabela->addColuna(array('campo' => 'produto', 'etiqueta' => 'Produto', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
+            $this->_tabela->addColuna(array('campo' => 'quantidade', 'etiqueta' => 'Quantidade', 'tipo' => 'N', 'width' => 100, 'posicao' => 'E'));
+        }
         $this->_tabela->addColuna(array('campo' => 'saida', 'etiqueta' => 'Saída', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'entrada', 'etiqueta' => 'Entrada', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
     }
 
-    private function getDados($data_ini, $data_fim, $forma_pagamento) {
+    private function getDados($param) {
         $ret = [];
-        $fornecedores[0] = 'Fornecedor não informado';
-        $clientes[0] = 'Cliente não informado';
         $saida = 0;
         $entrada = 0;
 
-        $where = ($forma_pagamento != 'todos') ? "AND forma_pagamento = '$forma_pagamento'" : '';
-
-        $sql = "SELECT * FROM pm_compra WHERE data >= $data_ini AND data <= $data_fim";
+        $sql = "SELECT compra.*, fornecedor.nome_fantasia FROM pm_compra AS compra
+                LEFT JOIN pm_fornecedores AS fornecedor ON compra.id_fornecedor = fornecedor.id
+                WHERE compra.data >= '{$param['data_ini']}' AND compra.data <= '{$param['data_fim']}'";
         $rows = query($sql);
         if(is_array($rows) && count($rows) > 0) {
             foreach($rows as $row) {
-                if(!isset($fornecedores[$row['id_fornecedor']])) {
-                    $sql = "SELECT nome_fantasia FROM pm_fornecedores WHERE id = ".$row['id_fornecedor'];
-                    $fornecedor = query($sql);
-
-                    $fornecedores[$row['id_fornecedor']] = $fornecedor[0][0];
-                }
-
                 $temp = [];
                 $temp['data'] = $row['data'];
-                $temp['participante'] = $fornecedores[$row['id_fornecedor']];
+                $temp['participante'] = !empty($row['nome_fantasia']) ? $row['nome_fantasia'] : 'Fornecedor não informado';
                 $temp['saida'] = 'R$ ' . number_format($row['custo'], 2, ',', '.');
-                $temp['entrada'] = '-';
+                $temp['entrada'] = '----';
                 $ret[] = $temp;
 
                 $saida += $row['custo'];
             }
         }
 
-        $sql = "SELECT * FROM pm_venda WHERE data >= $data_ini AND data <= $data_fim $where";
+        $sql = "SELECT venda.*, cliente.nome FROM pm_venda AS venda
+                LEFT JOIN pm_clientes AS cliente ON venda.cliente = cliente.id
+                WHERE venda.data >= '{$param['data_ini']}' AND venda.data <= '{$param['data_fim']}'";
         $rows = query($sql);
         if(is_array($rows) && count($rows) > 0) {
             foreach($rows as $row) {
-                if(!isset($clientes[$row['cliente']])) {
-                    $sql = "SELECT nome FROM pm_clientes WHERE id = ".$row['cliente'];
-                    $cliente = query($sql);
-
-                    $clientes[$row['cliente']] = $cliente[0][0];
-                }
-
                 $temp = [];
                 $temp['data'] = $row['data'];
-                $temp['participante'] = $clientes[$row['cliente']];
-                $temp['saida'] = '-';
+                $temp['participante'] = !empty($row['nome']) ? $row['nome'] : 'Cliente não informado';
+                $temp['saida'] = '----';
                 $temp['entrada'] = 'R$ ' . number_format($row['valor'], 2, ',', '.');
                 $ret[] = $temp;
 
@@ -170,4 +170,89 @@ class relatorio_rendimentos {
         return $ret;
     }
 
+    private function getDadosPorProduto($param) {
+        $ret = [];
+        $saida = 0;
+        $entrada = 0;
+
+        $sql = "SELECT itens.*, compra.data, produto.produto AS nome_produto
+                FROM pm_compra_itens AS itens
+                    LEFT JOIN pm_compra AS compra ON compra.id = itens.id_compra
+                    LEFT JOIN pm_produtos AS produto ON produto.id = itens.produto
+                WHERE compra.data >= '{$param['data_ini']}' AND compra.data <= '{$param['data_fim']}'
+                    AND itens.produto = {$param['id_produto']}";
+        $rows = query($sql);
+        if(is_array($rows) && count($rows) > 0) {
+            $this->_produto = $rows[0]['nome_produto'];
+
+            foreach($rows as $row) {
+                $temp = [];
+                $temp['data'] = $row['data'];
+                $temp['produto'] = $row['nome_produto'];
+                $temp['quantidade'] = $row['quantidade'];
+                $temp['saida'] = 'R$ ' . number_format($row['total'], 2, ',', '.');
+                $temp['entrada'] = '----';
+                $ret[] = $temp;
+
+                $saida += $row['total'];
+            }
+        }
+
+        $sql = "SELECT itens.*, venda.data, produto.produto AS nome_produto FROM pm_venda_itens AS itens
+                    LEFT JOIN pm_venda AS venda ON venda.id = itens.id_venda
+                    LEFT JOIN pm_produtos AS produto ON produto.id = itens.produto
+                WHERE venda.data >= '{$param['data_ini']}' AND venda.data <= '{$param['data_fim']}'
+                    AND itens.produto = {$param['id_produto']}";
+        $rows = query($sql);
+        if(is_array($rows) && count($rows) > 0) {
+            $this->_produto = $rows[0]['nome_produto'];
+
+            foreach($rows as $row) {
+                $temp = [];
+                $temp['data'] = $row['data'];
+                $temp['produto'] = $row['nome_produto'];
+                $temp['quantidade'] = $row['quantidade'];
+                $temp['saida'] = '----';
+                $temp['entrada'] = 'R$ ' . number_format($row['valor'], 2, ',', '.');
+                $ret[] = $temp;
+
+                $entrada += $row['valor'];
+            }
+        }
+
+        usort($ret, function($a, $b) {
+            return strtotime($a['data']) - strtotime($b['data']);
+        });
+
+        $temp = [];
+        $temp['saida'] = '<b>R$ ' . number_format($saida, 2, ',', '.') . '</b>';
+        $temp['entrada'] = '<b>R$ ' . number_format($entrada, 2, ',', '.') . '</b>';
+        $ret[] = $temp;
+
+        $this->_rendimento = number_format($entrada - $saida, 2, ',', '.');
+
+        $temp = [];
+        $temp['saida'] = "<b>TOTAL</b>";
+        $temp['entrada'] = '<b>R$ ' . $this->_rendimento . '</b>';
+        $ret[] = $temp;
+
+        return $ret;
+    }
+
+}
+
+function getProdutos() {
+    $ret = [];
+    $ret[] = ['0', 'Todos'];
+
+    $sql = "SELECT id, produto FROM pm_produtos WHERE ativo = 'S'";
+    $rows = query($sql);
+
+    if(is_array($rows) && count($rows) > 0) {
+        foreach($rows as $row) {
+            $ret[] = [$row['id'], $row['produto']];
+        }
+    }
+
+    return $ret;
 }
