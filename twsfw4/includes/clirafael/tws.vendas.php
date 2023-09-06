@@ -142,20 +142,45 @@ class vendas {
 
     private function criarCampoSelect($id_produto = ''){
 		if(empty($this->_produtos)) {
-			$sql = "SELECT id, produto FROM pm_produtos WHERE ativo = 'S'";
+			$sql = "SELECT id, produto, apos_produto, antes_produto FROM pm_produtos WHERE ativo = 'S'";
 			$this->_produtos = query($sql);
 		}
 
 		$html = "<option value=''>Escolha uma opção</option>";
 		if(is_array($this->_produtos) && count($this->_produtos) > 0) {
 			foreach($this->_produtos as $row) {
-				if($id_produto == $row['id']) {
-					$selecionado = 'selected';
+				$temp = [];
+				$temp['id'] = $row['id'];
+				$temp['produto'] = $row['produto'];
+				$temp['antes_produto'] = $row['antes_produto'];
+
+				if($row['apos_produto'] == 0) {
+					$primeiro = $temp;
 				} else {
-					$selecionado = '';
+					$produtos[$row['id']] = $temp;
 				}
-				$html .= "<option value='{$row['id']}' $selecionado>{$row['produto']}</option>";
 			}
+
+			// Organiza pela ordem escolhida
+			$selecionado = ($id_produto == $primeiro['id']) ? 'selected' : '';
+			$html .= "<option value='{$primeiro['id']}' $selecionado>{$primeiro['produto']}</option>";
+
+            $id_proximo = $primeiro['antes_produto'];
+            while(isset($produtos[$id_proximo])) {
+				$selecionado = ($id_produto == $produtos[$id_proximo]['id']) ? 'selected' : '';
+				$html .= "<option value='{$produtos[$id_proximo]['id']}' $selecionado>{$produtos[$id_proximo]['produto']}</option>";
+
+                $id_proximo = $produtos[$id_proximo]['antes_produto'];
+            }
+
+			// foreach($opcoes as $row) {
+			// 	if($id_produto == $row['id']) {
+			// 		$selecionado = 'selected';
+			// 	} else {
+			// 		$selecionado = '';
+			// 	}
+			// 	$html .= "<option value='{$row['id']}' $selecionado>{$row['produto']}</option>";
+			// }
 		}
 
 		return $html;

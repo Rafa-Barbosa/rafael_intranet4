@@ -98,7 +98,6 @@ class produtos {
         $this->_tabela->addColuna(array('campo' => 'marca', 'etiqueta' => 'Marca', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'modelo', 'etiqueta' => 'Modelo', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'cor', 'etiqueta' => 'Cor', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
-        $this->_tabela->addColuna(array('campo' => 'ano', 'etiqueta' => 'Ano', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'preco', 'etiqueta' => 'Preço', 'tipo' => 'V', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'quantidade', 'etiqueta' => 'Quantidade', 'tipo' => 'N', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'fabricacao', 'etiqueta' => 'Fabricação', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
@@ -124,8 +123,21 @@ class produtos {
                 $temp['quantidade'] = $row['quantidade'];
                 $temp['fabricacao'] = $row['fabricacao'];
                 $temp['fornecedor'] = $row['fornecedor'];
+                $temp['antes_produto'] = $row['antes_produto'];
 
-                $ret[] = $temp;
+                if($row['apos_produto'] == 0) {
+                    $primeiro = $temp;
+                } else {
+                    $produtos[$row['id']] = $temp;
+                }
+            }
+
+            // Organiza pela ordem escolhida
+            $ret[] = $primeiro;
+            $id_proximo = $primeiro['antes_produto'];
+            while(isset($produtos[$id_proximo])) {
+                $ret[] = $produtos[$id_proximo];
+                $id_proximo = $produtos[$id_proximo]['antes_produto'];
             }
         }
 
@@ -166,6 +178,23 @@ class produtos {
         if(!$excluir) {
             addPortaljavaScript("confirmar('$nome', '$id')");
         } else {
+            // ====================== ATUALIZA ORDENAÇÃO ======================
+            $sql = "SELECT apos_produto, antes_produto FROM pm_produtos WHERE id = $id";
+			$produto_atual = query($sql);
+			$produto_atual = $produto_atual[0];
+
+            // Atualiza o produto anterior
+            if($produto_atual['apos_produto'] != 0) {
+                $sql = montaSQL(['antes_produto' => $produto_atual['antes_produto']], 'pm_produtos', 'UPDATE', "id = ".$produto_atual['apos_produto']);
+                query($sql);
+            }
+
+            // Atualiza o próximo produto
+            if($produto_atual['antes_produto'] != 0) {
+                $sql = montaSQL(['apos_produto' => $produto_atual['apos_produto']], 'pm_produtos', 'UPDATE', "id = ".$produto_atual['antes_produto']);
+                query($sql);
+            }
+
             $sql = "DELETE FROM pm_produtos WHERE id = $id";
             query($sql);
     
