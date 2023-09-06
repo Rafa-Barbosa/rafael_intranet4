@@ -245,12 +245,29 @@ function getProdutos() {
     $ret = [];
     $ret[] = ['0', 'Todos'];
 
-    $sql = "SELECT id, produto FROM pm_produtos WHERE ativo = 'S'";
+    $sql = "SELECT id, produto, apos_produto, antes_produto FROM pm_produtos WHERE ativo = 'S'";
     $rows = query($sql);
 
     if(is_array($rows) && count($rows) > 0) {
         foreach($rows as $row) {
-            $ret[] = [$row['id'], $row['produto']];
+            $temp = [];
+            $temp['id'] = $row['id'];
+            $temp['produto'] = $row['produto'];
+            $temp['antes_produto'] = $row['antes_produto'];
+
+            if($row['apos_produto'] == 0) {
+                $primeiro = $temp;
+            } else {
+                $produtos[$row['id']] = $temp;
+            }
+        }
+
+        // Organiza pela ordem escolhida
+        $ret[] = [$primeiro['id'], $primeiro['produto']];
+        $id_proximo = $primeiro['antes_produto'];
+        while(isset($produtos[$id_proximo])) {
+            $ret[] = [$produtos[$id_proximo]['id'], $produtos[$id_proximo]['produto']];
+            $id_proximo = $produtos[$id_proximo]['antes_produto'];
         }
     }
 
