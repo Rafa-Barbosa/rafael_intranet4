@@ -143,10 +143,12 @@ class incluir_produto {
 			// Organiza pela ordem escolhida
 			$opcoes = [];
 			$opcoes[0] = 'Antes de todos';
-            $opcoes[$primeiro['id']] = $primeiro['produto'];
+			if($primeiro['id'] != $id) {
+				$opcoes[$primeiro['id']] = $primeiro['produto'];
+			}
             $id_proximo = $primeiro['antes_produto'];
             while(isset($op_produtos[$id_proximo])) {
-				if($id_proximo != $id) {
+				if($op_produtos[$id_proximo]['id'] != $id) {
 					$opcoes[$op_produtos[$id_proximo]['id']] = $op_produtos[$id_proximo]['produto'];
 				}
                 $id_proximo = $op_produtos[$id_proximo]['antes_produto'];
