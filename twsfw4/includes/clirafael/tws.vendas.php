@@ -32,11 +32,13 @@ class vendas {
 			$cliente = $itens['cliente'];
 			$forma_pagamento = $itens['forma_pagamento'];
 			$total = $itens['total'];
+			$id_venda = $itens['id_venda'] ?? '';
 			$itens = $itens['formOS'];
 		} else {
 			$total = 'Total';
 			$cliente = '';
 			$forma_pagamento = '';
+			$id_venda = '';
 		}
 
 		$param = [];
@@ -61,7 +63,7 @@ class vendas {
 		$param['valor'] = $forma_pagamento;
 		$form->addCampo($param);
 
-		$form->addConteudoPastas(1, $this->getTabelaItens($total, $itens));
+		$form->addConteudoPastas(1, $this->getTabelaItens($total, $itens, $id_venda));
 		
 		$form->setEnvio(getLink() . "vender.salvar&", 'formIncluir_venda');
 		$form->setPastas([1 => 'Pedidos']);
@@ -71,7 +73,7 @@ class vendas {
 		return $ret;
 	}
 
-    private function getTabelaItens($total, $itens = []) {
+    private function getTabelaItens($total, $itens = [], $id_venda = '') {
         $ret = '';
 
         $num_tarefas = !empty($itens) ? count($itens) : 0;
@@ -120,7 +122,10 @@ class vendas {
 				$temp['desconto_valor'] = "<input onblur='atualizaTotal($num)' type='number' name='formOS[$num][desconto_valor]' value='{$item['desconto_valor']}' style='width:100%;text-align: right;' id='" . ($num) . "campovalor' class='form-control  form-control-sm'          >";
 				$temp['valor_produto'] = "<input onblur='callAjax($num)' type='text' name='formOS[$num][valor_produto]' value='{$item['valor_produto']}' style='width:100%;text-align: right;' id='" . ($num) . "campovalortotal' class='form-control  form-control-sm'         >";
 				$temp['com_desconto'] = "<input onblur='atualizaTotal($num)' type='text' name='formOS[$num][com_desconto]' value='{$item['com_desconto']}' style='width:100%;text-align: right;' id='" . ($num) . "campocomdesconto' class='form-control  form-control-sm'         >";
-				$temp['bt'] = "<button type='button' id='".$num."campoexcluir' class='btn btn-xs btn-danger' onclick='excluirRat('$num');'>Excluir</button>";
+				$temp['bt'] = "<button type='button' id='".$num."campoexcluir' class='btn btn-xs btn-danger float-left' onclick=\"excluirRat('$num');\">Excluir</button>";
+
+				// Acrescenta o id no primeiro campo
+				$temp['id_produto'] .= isset($item['id_item']) ? "<input type='hidden' name='formOS[$num][id_item]' id='formOS[$num][id_item]' value='{$item['id_item']}'>" : '';
 				
 				$dados[] = $temp;
 				$num++;
@@ -129,7 +134,9 @@ class vendas {
 			addPortaljavaScript("$cont
 			calculaTotalItens();");
 		}
-		$tab .= "<input type='text' name='total' id='total' value='$total' onblur='calculaTotalItens();' style='text-align: right;'>";
+		$total = ($total != 'Total') ? 'RS ' . number_format($total, 2, ',', '.') : $total;
+		$tab .= "<input type='text' name='total' id='total' value='$total' onblur='calculaTotalItens();' style='text-align: right;'>
+				<input type='hidden' name='id_venda' id='id_venda' value='$id_venda'>";
 
 		// foreach($dados as $d) {
 		// 	$ret .= $d['id_item'];
@@ -188,9 +195,22 @@ class vendas {
 
 	public function salvar() {
 		if(is_array($_POST['formOS']) && count($_POST['formOS']) > 0) {
-			$id = base64_encode(time());
-			$id = base64_decode($id);
+			if(isset($_POST['id_venda']) && !empty($_POST['id_venda'])) { // é uma edição
+				$nova_venda = false;
+				
+				$id = $_POST['id_venda'];
+			} else {
+				$nova_venda = true;
+				
+				$id = base64_encode(time());
+				$id = base64_decode($id);
+			}
 
+			// Itens anteriores
+			$sql = "SELECT id FROM pm_venda_itens WHERE id_venda = $id";
+			$itens_anteriores = query($sql);
+
+			$id_itens = [];
 			foreach($_POST['formOS'] as $item) {
 				if(!empty($item['valor_produto'])) {
 					$preco = str_replace(['R$ ', '.'], '', $item['valor_produto']);
@@ -204,6 +224,16 @@ class vendas {
 					$desconto_porcentagem = !empty($item['desconto_porcentagem']) ? $item['desconto_porcentagem'] : 0;
 
 					if($valor_item > 0) {
+						if(isset($item['id_item']) && !empty($item['id_item'])) { // é uma edição
+							$tipo_sql_item = 'UPDATE';
+							$where_item = "id = ".$item['id_item'];
+
+							$id_itens[] = $item['id_item'];
+						} else {
+							$tipo_sql_item = 'INSERT';
+							$where_item = '';
+						}
+
 						$param = [];
 						$param['id_venda'] = $id;
 						$param['produto'] = $item['id_produto'];
@@ -211,7 +241,7 @@ class vendas {
 						$param['desconto_porcentagem'] = $desconto_porcentagem;
 						$param['desconto_valor'] = $desconto_valor;
 						$param['valor'] = $valor_item;
-						$sql = montaSQL($param, 'pm_venda_itens');
+						$sql = montaSQL($param, 'pm_venda_itens', $tipo_sql_item, $where_item);
 						query($sql);
 		
 						$sql = "UPDATE pm_produtos SET quantidade = quantidade - ".$item['quantidade']." WHERE id = ".$item['id_produto'];
@@ -228,16 +258,36 @@ class vendas {
 				}
 			}
 
+			// Caso seja uma edição, verifica se não foi excluído nenhum item
+			if(is_array($itens_anteriores) && count($itens_anteriores) > 0) {
+				foreach($itens_anteriores as $item_anterior) {
+					if(!in_array($item_anterior['id'], $id_itens)) {
+						$sql = "DELETE FROM pm_venda_itens WHERE id = ".$item_anterior['id'];
+						query($sql);
+					}
+				}
+			}
+
 			$total = str_replace(['R$ ', '.'], '', $_POST['total']);
 			$total = str_replace(',', '.', $total);
 
 			$param = [];
-			$param['id'] 				= $id;
-			$param['data'] 				= date('Ymd');
+			if($nova_venda) {
+				// Campos que só serão considerados em caso de inclusão
+				$param['id'] 				= $id;
+				$param['data'] 				= date('Ymd');
+
+				$tipo_sql_venda = 'INSERT';
+				$where_venda = '';
+			} else {
+				$tipo_sql_venda = 'UPDATE';
+				$where_venda = "id = $id";
+			}
+
 			$param['cliente'] 			= $_POST['cliente'] ?? null;
 			$param['valor'] 			= $total;
 			$param['forma_pagamento'] 	= $_POST['forma_pagamento'];
-			$sql = montaSQL($param, 'pm_venda');
+			$sql = montaSQL($param, 'pm_venda', $tipo_sql_venda, $where_venda);
 			query($sql);
 
 			$mensagem = "Venda registrada com sucesso!";
@@ -256,12 +306,12 @@ class vendas {
 		$ret .= "
 		
 		function excluirRat(id){
-				var t = $('#tabRatID').DataTable();
-				t.row( $('#'+id+'campoexcluir').parents('tr') ).remove().draw();
+			var t = $('#tabRatID').DataTable();
+			t.row( $('#'+id+'campoexcluir').parents('tr') ).remove().draw();
 
-				cont.splice(id, 1);
-				calculaTotalItens();
-			}
+			cont.splice(id, 1);
+			calculaTotalItens();
+		}
 
 		var cont = [];
 		function incluiRat(valor){
@@ -342,6 +392,7 @@ class vendas {
 					valor = parseFloat(valor.replace(/\./g, '').replace(',', '.').replace('R$', ''));
 					valor_total += valor;
 				}
+				// console.log('valor: '+valor_total);
 			});
 
 			$('#total').val('R$ '+valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));

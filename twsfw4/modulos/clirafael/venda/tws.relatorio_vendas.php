@@ -23,6 +23,7 @@ class relatorio_vendas {
         'detalhado'         => true,
         'vender'            => true,
         'ajax'              => true,
+        'editar'            => true,
     );
 
     // variavel que armazena a classe tabela01
@@ -88,6 +89,18 @@ class relatorio_vendas {
         $param = array(
             'texto' => 'Detalhado', //Texto no botão
             'link' => getLink() . 'detalhado&id=', //Link da página para onde o botão manda
+            'coluna' => 'id', //Coluna impressa no final do link
+            'width' => 100, //Tamanho do botão
+            'flag' => '',
+            'tamanho' => 'pequeno', //Nenhum fez diferença?
+            'cor' => 'padrao', //padrão: azul; danger: vermelho; success: verde
+            'pos' => 'F',
+        );
+        $this->_tabela->addAcao($param);
+
+        $param = array(
+            'texto' => 'Editar', //Texto no botão
+            'link' => getLink() . 'editar&id=', //Link da página para onde o botão manda
             'coluna' => 'id', //Coluna impressa no final do link
             'width' => 100, //Tamanho do botão
             'flag' => '',
@@ -223,6 +236,50 @@ class relatorio_vendas {
             $ret = $compra->index();
         } else if($op == 'salvar') {
             $ret = $compra->salvar();
+        }
+
+        return $ret;
+    }
+
+    public function editar() {
+        $ret = '';
+        $id = $_GET['id'];
+
+        $sql = "SELECT venda.cliente, venda.forma_pagamento, itens.produto as id_produto, itens.id AS id_item, itens.quantidade,
+                    itens.desconto_porcentagem, itens.desconto_valor, itens.valor AS com_desconto, venda.valor AS total_venda
+                    , produto.preco
+                FROM pm_venda as venda
+                LEFT JOIN pm_venda_itens as itens ON itens.id_venda = venda.id
+                LEFT JOIN pm_produtos AS produto ON produto.id = itens.produto
+                WHERE venda.id = $id";
+        $rows = query($sql);
+
+        if(is_array($rows) && count($rows) > 0) {
+            $param = [];
+            $param['id_venda'] = $id;
+            $param['cliente'] = $rows[0]['cliente'];
+            $param['forma_pagamento'] = $rows[0]['forma_pagamento'];
+            $param['total'] = $rows[0]['total_venda'];
+
+            $param['formOS'] = [];
+            foreach($rows as $row) {
+                $temp = [];
+                $temp['id_item']                = $row['id_item'];
+                $temp['id_produto']             = $row['id_produto'];
+                $temp['quantidade']             = $row['quantidade'];
+                $temp['desconto_porcentagem']   = $row['desconto_porcentagem'];
+                $temp['desconto_valor']         = $row['desconto_valor'];
+                $temp['valor_produto']          = 'R$ ' . number_format($row['preco'], 2, ',', '.');
+                $temp['com_desconto']           = 'R$ ' . number_format($row['com_desconto'], 2, ',', '.');
+
+                $param['formOS'][] = $temp;
+            }
+
+            $venda = new vendas();
+            $ret = $venda->index($param);
+        } else {
+            addPortalMensagem('Erro ao encontrar a venda', 'error');
+            $ret = $this->index();
         }
 
         return $ret;
