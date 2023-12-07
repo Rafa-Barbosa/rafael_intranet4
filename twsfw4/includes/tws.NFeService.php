@@ -21,6 +21,9 @@ use NFePHP\NFe\Common\Standardize;
 if(!defined('TWSiNet') || !TWSiNet) die('Esta nao e uma pagina de entrada valida!');
 
 class NFeService {
+    // Dados do emitente
+    private $_emitente;
+
     // Cofiguração inicial
     private $_config;
 
@@ -39,15 +42,34 @@ class NFeService {
     // Recibo do envio
     private $_recibo;
 
-    function __construct() {
+    function __construct($emitente, $certificado) {
         global $config;
+
+        // Dados emitente
+        $this->_emitente['razao']       = $emitente['razao'];
+        $this->_emitente['fantasia']    = $emitente['fantasia'];
+        $this->_emitente['ie']          = $emitente['ie'];
+        $this->_emitente['ctr']         = $emitente['ctr'];
+        $this->_emitente['cnpj']        = $emitente['cnpj'];
+        $this->_emitente['fone']        = $emitente['fone'];
         
+        // Endereço emitente
+        $this->_emitente['logradouro']      = $emitente['logradouro'];
+        $this->_emitente['nro']             = $emitente['nro'];
+        $this->_emitente['complemento']     = $emitente['complemento'] ?? null;
+        $this->_emitente['bairro']          = $emitente['bairro'];
+        $this->_emitente['nf_municipio_id'] = $emitente['nf_municipio_id'];
+        $this->_emitente['nome_municipio']  = $emitente['nome_municipio'];
+        $this->_emitente['uf']              = $emitente['uf'];
+        $this->_emitente['cep']             = $emitente['cep'];
+
+
         $this->_config = [
             "atualizacao" => "2017-02-20 09:11:21",
             "tpAmb"       => 2,
-            "razaosocial" => "SUA RAZAO SOCIAL LTDA",
-            "cnpj"        => "99999999999999",
-            "siglaUF"     => "SP",
+            "razaosocial" => $this->_emitente['razao'],
+            "cnpj"        => $this->_emitente['cnpj'],
+            "siglaUF"     => $this->_emitente['uf'],
             "schemes"     => "PL_009_V4",
             "versao"      => '4.00',
             "tokenIBPT"   => "AAAAAAA",
@@ -61,13 +83,16 @@ class NFeService {
             ]
         ];
 
+        $arquivo = $certificado['nome_arquivo'];
+        $senha = $certificado['senha'];
+
         try {
             $configJson = json_encode($this->_config);
-            $pfxcontent = file_get_contents('C:\xampp\htdocs\intranet4\twsfw4\teste\expired_certificate.pfx');
+            $pfxcontent = file_get_contents($config['baseS3'] . "certificados/$arquivo");
     
-            $this->_tools = new Tools($configJson, Certificate::readPfx($pfxcontent, 'associacao'));
+            $this->_tools = new Tools($configJson, Certificate::readPfx($pfxcontent, $senha));
             //$tools->disableCertValidation(true); //tem que desabilitar
-            $this->_tools->model('65');
+            $this->_tools->model('55');
         } catch(\Exception $e) {
             $this->_erros[] = $e->getMessage();
             // echo $e->getMessage();
@@ -90,7 +115,73 @@ class NFeService {
         return $this->_recibo;
     }
 
-    public function gerarXml2() {
+    public function gerarXml2($param) {
+        // IDE
+        $codigo_nf          = $param['codigo_nf'];
+        $numero_nf          = $param['numero_nf'];
+        $natureza_operazao  = $param['natureza_operazao'] ?? 'VENDA DE MERCADORIAS';
+        $ide_mod            = $param['mod'] ?? 55;
+        $ide_serie          = $param['serie'] ?? 1;
+        $tipo_op            = $param['tipo_op'] ?? 1; // 0=entrada 1=saida
+        $municipio          = $param['municipio'] ?? 4304606;
+        $estado             = $param['estado'] ?? 43;
+        $op_interna         = ($estado == 43) ? 1 : 2; // 1=interna 2=interestadual
+        $tipo_emissao       = $param['tipo_emissao'] ?? 1;
+        $ambiente           = $param['ambiente'] ?? 2; // 1=Produção 2=Homologação
+        $finalidade_nfe     = $param['finalidade_nfe'] ?? 1;
+        $ind_final          = $param['ind_final'] ?? 0;
+        $presenca           = $param['presenca'] ?? 1; // 1=operação presencial
+        $intermediador      = $param['intermediador'] ?? 0; // 0=operação sem intermediador
+        $danfe              = $param['danfe'] ?? 1; // 1=DANFE normal/retrato
+
+        // DESTINATARIO
+        $cli_nome = $param['cli_nome'];
+        $indicador_ie = $param['indicador_ie'] ?? 1;
+        $cli_ie = $param['cli_ie'];
+        $cli_email = $param['cli_email'];
+        $cpf_cnpj = $param['cpf_cnpj'];
+
+        // ENDEREÇO DESTINATARIO
+        $cli_logradouro = $param['cli_logradouro'];
+        $cli_nro = $param['cli_nro'];
+        $cli_complemento = $param['complemento'] ?? null;
+        $cli_bairro = $param['bairro'];
+        $cli_cMunicipio = $param['cli_cMunicipio'] ?? 4304606;
+        $cli_xMunicipio = $param['cli_xMunicipio'] ?? 'Canoas';
+        $cli_uf = $param['cli_uf'] ?? 'RS';
+        $cli_cep = $param['cli_cep'];
+        $cli_fone = $param['cli_fone'] ?? null;
+
+        $arr_estados = [
+            'AC' => '01',
+            'AL' => '02',
+            'AP' => '03',
+            'AM' => '04',
+            'BA' => '05',
+            'CE' => '06',
+            'DF' => '07',
+            'ES' => '08',
+            'GO' => '09',
+            'MA' => '10',
+            'MT' => '11',
+            'MS' => '12',
+            'MG' => '13',
+            'PA' => '14',
+            'PB' => '15',
+            'PR' => '41',
+            'PE' => '17',
+            'PI' => '18',
+            'RJ' => '19',
+            'RN' => '20',
+            'RS' => '43',
+            'RO' => '22',
+            'RR' => '23',
+            'SC' => '24',
+            'SP' => '25',
+            'SE' => '26',
+            'TO' => '17',
+        ];
+
         try {
             $nfe = new Make();
 
@@ -103,28 +194,28 @@ class NFeService {
 
             // ide
             $std = new stdClass();
-            $std->cUF = 51;
-            $std->cNF = '93750348'; // Número aleatório gerado pelo emitente para cada NF-e
-            $std->natOp = 'VENDA DE MERCADORIAS';
+            $std->cUF = $arr_estados[$this->_emitente['uf']] ?? 43;
+            $std->cNF = $codigo_nf;//'93750348'; // Número aleatório gerado pelo emitente para cada NF-e
+            $std->natOp = $natureza_operazao;
 
             $std->indPag = 0; //NÃO EXISTE MAIS NA VERSÃO 4.00
 
-            $std->mod = 55;
-            $std->serie = 1;
-            $std->nNF = 2812;
+            $std->mod = $ide_mod;
+            $std->serie = $ide_serie;
+            $std->nNF = $numero_nf; //2812;
             $std->dhEmi = date('Y-m-d\TH:i:sP'); // '2015-02-19T13:48:00-02:00';
             $std->dhSaiEnt = null;
-            $std->tpNF = 1;
-            $std->idDest = 1;
-            $std->cMunFG = 5107925;
-            $std->tpImp = 1;
-            $std->tpEmis = 1;
+            $std->tpNF = $tipo_op;
+            $std->idDest = $op_interna;
+            $std->cMunFG = $municipio;
+            $std->tpImp = $danfe;
+            $std->tpEmis = $tipo_emissao;
             $std->cDV = ''; // calculo modulo 11
-            $std->tpAmb = 2; // 1 = Produção, 2 = Homologação
-            $std->finNFe = 1;
-            $std->indFinal = 0;
-            $std->indPres = 1;
-            $std->indIntermed = 0;
+            $std->tpAmb = $ambiente; // 1 = Produção, 2 = Homologação
+            $std->finNFe = $finalidade_nfe;
+            $std->indFinal = $ind_final;
+            $std->indPres = $presenca;
+            $std->indIntermed = $intermediador;
             $std->procEmi = 0;
             $std->verProc = '3.10.31';
             $std->dhCont = null;
@@ -133,58 +224,61 @@ class NFeService {
 
             // emit
             $std = new stdClass();
-            $std->xNome = 'ELINELTON XAVIER SILVA';
-            $std->xFant = 'COMERCIAL XAVIER';
-            $std->IE = '135685303'; // Inscrição Estadual
+            $std->xNome = $this->_emitente['razao'];
+            $std->xFant = $this->_emitente['fantasia'];
+            $std->IE = $this->_emitente['ie']; // Inscrição Estadual
             // $std->IEST;
             // $std->IM;
             // $std->CNAE;
-            $std->CRT = 1;
-            $std->CNPJ = '21845893000146'; //indicar apenas um CNPJ ou CPF
+            $std->CRT = $this->_emitente['ctr'];
+            $std->CNPJ = $this->_emitente['cnpj']; //indicar apenas um CNPJ ou CPF
             // $std->CPF;
             $nfe->tagemit($std);
 
             // enderEmit
             $std = new stdClass();
-            $std->xLgr = 'RUA CEREJEIRAS';
-            $std->nro = 212;
-            $std->xCpl = null;
-            $std->xBairro = 'RESIDENCIAL COLINAS';
-            $std->cMun = 5107925;
-            $std->xMun = 'SORRISO';
-            $std->UF = 'MT';
-            $std->CEP = '78890000';
+            $std->xLgr = $this->_emitente['logradouro'];
+            $std->nro = $this->_emitente['nro'];
+            $std->xCpl = !empty($this->_emitente['complemento']) ? $this->_emitente['complemento'] : null;
+            $std->xBairro = $this->_emitente['bairro'];
+            $std->cMun = $this->_emitente['nf_municipio_id'];
+            $std->xMun = $this->_emitente['nome_municipio'];
+            $std->UF = $this->_emitente['uf'];
+            $std->CEP = $this->_emitente['cep'];
             $std->cPais = 1058;
             $std->xPais = 'Brasil';
-            $std->fone = '66999555791';
+            $std->fone = $this->_emitente['fone'];
             $nfe->tagenderEmit($std);
 
             // dest
             $std = new stdClass();
-            $std->xNome = 'FARMACHIQ DROGARIAS LTDA';
-            $std->indIEDest = 1;
-            $std->IE = '137335105';
+            $std->xNome = $cli_nome;
+            $std->indIEDest = $indicador_ie;
+            $std->IE = $cli_ie; //'137335105';
             // $std->ISUF;
             // $std->IM;
-            $std->email = 'rafaelpostalbarbosa@gmail.com';
-            $std->CNPJ = '31216969000128'; //indicar apenas um CNPJ ou CPF ou idEstrangeiro
-            // $std->CPF = '86262653015';
+            $std->email = $cli_email;
+            if(strlen($cpf_cnpj) > 11) { //indicar apenas um CNPJ ou CPF ou idEstrangeiro
+                $std->CNPJ = $cpf_cnpj;
+            } else {
+                $std->CPF = $cpf_cnpj;
+            }
             $std->idEstrangeiro = null;
             $nfe->tagdest($std);
 
             // enderDest
             $std = new stdClass();
-            $std->xLgr = 'AV TANCREDO NEVES';
-            $std->nro = 2302;
-            $std->xCpl = null;
-            $std->xBairro = 'CENTRO';
-            $std->cMun = 5107925;
-            $std->xMun = 'SORRISO';
-            $std->UF = 'MT';
-            $std->CEP = '78890000';
+            $std->xLgr = $cli_logradouro;
+            $std->nro = $cli_nro;
+            $std->xCpl = $cli_complemento;
+            $std->xBairro = $cli_bairro;
+            $std->cMun = $cli_cMunicipio;
+            $std->xMun = $cli_xMunicipio;
+            $std->UF = $cli_uf;
+            $std->CEP = $cli_cep;
             $std->cPais = 1058;
             $std->xPais = 'Brasil';
-            $std->fone = null;
+            $std->fone = $cli_fone;
             $nfe->tagenderDest($std);
 
             // prod
@@ -318,10 +412,10 @@ class NFeService {
             $std->infCpl = 'informacoes complementares';
             $nfe->taginfAdic($std);
 
-            $std = new stdClass();
-            $std->qrcode = null; // = 'http://nfce.encat.org/desenvolvedor/qrcode/';
-            $std->urlChave = null; // = 'http://nfce.encat.org/consumidor-nfce/consulte-nota-nfce';
-            $nfe->taginfNFeSupl($std);
+            // $std = new stdClass();
+            // $std->qrcode = '';
+            // $std->urlChave = '';
+            // $nfe->taginfNFeSupl($std);
 
             // var_dump($nfe->errors);
             $this->_xml = $nfe->monta();
@@ -637,7 +731,7 @@ class NFeService {
 
         $xml = empty($xml) ? $this->_xml : $xml;
 
-        try {
+        // try {
             //$content = conteúdo do certificado PFX
             $idLote = str_pad(1, 15, '0', STR_PAD_LEFT);
             //envia o xml para pedir autorização ao SEFAZ
@@ -655,9 +749,10 @@ class NFeService {
             // header('Content-type: text/xml; charset=UTF-8');
             // echo $resp;
             $this->_resposta = $resp;
-        } catch (\Exception $e) {
-            $this->_erros[] = $e->getMessage();
-            // echo $e->getMessage();
-        }
+            return $resp;
+        // } catch (\Exception $e) {
+        //     $this->_erros[] = $e->getMessage();
+        //     // echo $e->getMessage();
+        // }
     }
 }
