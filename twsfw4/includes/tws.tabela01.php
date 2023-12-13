@@ -409,6 +409,7 @@ class tabela01{
 				$sort = '';
 				$tipo = $this->_cabTipo[$i];
 				$valorCampo = isset($this->_dados[$l][$this->_campos[$i]]) ? $this->_dados[$l][$this->_campos[$i]] : '';
+				$negrito = (isset($this->_dados[$l]['negrito']) && $this->_dados[$l]['negrito']);
 				switch ($tipo){
 					case "V":
 						//Valor (duas casas decimais)
@@ -463,6 +464,9 @@ class tabela01{
 							$valorCampo = datas::dataS2D($valorCampo);
 						}
 						break;
+				}
+				if($negrito) {
+					$valorCampo = "<b>$valorCampo</b>";
 				}
 				switch (strtoupper($this->_cabPosicao[$i])) {
 					case "D":
