@@ -44,7 +44,9 @@ class relatorio_rendimentos {
 		$param['titulo'] = 'Relatório por período';
         $param['ordenacao'] = false;
         $param['filtro'] = false;
+        $param['imprimeZero'] = false;
 		$this->_tabela = new tabela01($param);
+        $this->_tabela->setCorLinha('corlinha');
 
         $programa = 'pm_extrato';
 		$param = [];
@@ -174,7 +176,9 @@ class relatorio_rendimentos {
         $ret = [];
         $saida = 0;
         $entrada = 0;
+        $quantidade_total = 0;
 
+        // puxa todas as saidas
         $sql = "SELECT itens.*, compra.data, produto.produto AS nome_produto
                 FROM pm_compra_itens AS itens
                     LEFT JOIN pm_compra AS compra ON compra.id = itens.id_compra
@@ -187,17 +191,19 @@ class relatorio_rendimentos {
 
             foreach($rows as $row) {
                 $temp = [];
-                $temp['data'] = $row['data'];
-                $temp['produto'] = $row['nome_produto'];
+                $temp['data']       = $row['data'];
+                $temp['produto']    = $row['nome_produto'];
                 $temp['quantidade'] = $row['quantidade'];
-                $temp['saida'] = 'R$ ' . number_format($row['total'], 2, ',', '.');
-                $temp['entrada'] = '----';
+                $temp['saida']      = 'R$ ' . number_format($row['total'], 2, ',', '.');
+                $temp['entrada']    = '----';
                 $ret[] = $temp;
 
                 $saida += $row['total'];
+                $quantidade_total += $row['quantidade'];
             }
         }
 
+        // puxa todas as entradas
         $sql = "SELECT itens.*, venda.data, produto.produto AS nome_produto FROM pm_venda_itens AS itens
                     LEFT JOIN pm_venda AS venda ON venda.id = itens.id_venda
                     LEFT JOIN pm_produtos AS produto ON produto.id = itens.produto
@@ -209,31 +215,40 @@ class relatorio_rendimentos {
 
             foreach($rows as $row) {
                 $temp = [];
-                $temp['data'] = $row['data'];
-                $temp['produto'] = $row['nome_produto'];
+                $temp['data']       = $row['data'];
+                $temp['produto']    = $row['nome_produto'];
                 $temp['quantidade'] = $row['quantidade'];
-                $temp['saida'] = '----';
-                $temp['entrada'] = 'R$ ' . number_format($row['valor'], 2, ',', '.');
+                $temp['saida']      = '----';
+                $temp['entrada']    = 'R$ ' . number_format($row['valor'], 2, ',', '.');
                 $ret[] = $temp;
 
                 $entrada += $row['valor'];
+                $quantidade_total += $row['quantidade'];
             }
         }
 
+        // ordena pela data
         usort($ret, function($a, $b) {
             return strtotime($a['data']) - strtotime($b['data']);
         });
 
+        $this->_rendimento = number_format($entrada - $saida, 2, ',', '.');
+        
+        $cor = (($entrada - $saida) >= 0) ? 'success' : 'danger';
+
         $temp = [];
-        $temp['saida'] = '<b>R$ ' . number_format($saida, 2, ',', '.') . '</b>';
-        $temp['entrada'] = '<b>R$ ' . number_format($entrada, 2, ',', '.') . '</b>';
+        $temp['quantidade'] = $quantidade_total;
+        $temp['saida']      = 'R$ ' . number_format($saida, 2, ',', '.');
+        $temp['entrada']    = 'R$ ' . number_format($entrada, 2, ',', '.');
+        $temp['corlinha']   = $cor;
+        $temp['negrito']    = true;
         $ret[] = $temp;
 
-        $this->_rendimento = number_format($entrada - $saida, 2, ',', '.');
-
         $temp = [];
-        $temp['saida'] = "<b>TOTAL</b>";
-        $temp['entrada'] = '<b>R$ ' . $this->_rendimento . '</b>';
+        $temp['saida']      = "TOTAL";
+        $temp['entrada']    = 'R$ ' . $this->_rendimento;
+        $temp['corlinha']   = $cor;
+        $temp['negrito']    = true;
         $ret[] = $temp;
 
         return $ret;
