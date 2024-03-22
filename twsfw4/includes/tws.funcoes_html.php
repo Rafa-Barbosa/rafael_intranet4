@@ -88,8 +88,10 @@ function addCard($parametros){
 	$ret = '';
 	$styleCard = [];
 	
-	$outline 	= $parametros['outline'] ?? CARD_OUTLINE;
-	$chat 		= $parametros['chat'] ?? false;
+	$outline 			= $parametros['outline'] ?? CARD_OUTLINE;
+	$chat 				= $parametros['chat'] ?? false;
+	$iniciar_minimizado = $parametros['iniciar_minimizado'] ?? false;
+	$id 				= $parametros['id'] ?? '';
 	
 	$cor 		= $parametros['cor'] ?? 'primary';
 	$possiveis = ['','primary','secondary','success','info','warning','danger','default'];
@@ -108,6 +110,14 @@ function addCard($parametros){
 
 	if($outline){
 		$styleCard[] = 'card-outline';
+	}
+
+	if($iniciar_minimizado) {
+		$styleCard[] = 'collapsed-card';
+	}
+
+	if(!empty($id)) {
+		$id = "id='$id'";
 	}
 	
 	//Botoes
@@ -137,7 +147,7 @@ function addCard($parametros){
 		$botoesTitulo[] = $temp;
 	}
 	
-	$ret .= '<div class="card '.implode(' ', $styleCard).'">'.$nl;
+	$ret .= '<div class="card '.implode(' ', $styleCard).'" '.$id.'>'.$nl;
 	
 	$header_class = ''; 
 	if(isset($parametros['header-class'])){
