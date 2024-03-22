@@ -20,6 +20,9 @@ class compras_itens {
     // Produtos registrados no banco
     private $_produtos;
 
+	// se o usuario está somente visualizando ou editando
+	private $_visualizar;
+
     function __construct() {
         $this->addJS_ListaPedidos();
     }
@@ -27,6 +30,7 @@ class compras_itens {
 	public function index($itens = []) {
 		$ret = '';
         $id = $_GET['id'] ?? '';
+		$this->_visualizar = $_GET['visualizar'] ?? false;
 		$form = new form01();
 
 		$param = [];
@@ -38,6 +42,7 @@ class compras_itens {
 		// $param['obrigatorio'] = true;
         $param['pasta'] = 1;
 		$param['valor'] = $itens['fornecedor_id'] ?? '';
+		$param['readonly'] = $this->_visualizar;
 		$form->addCampo($param);
 
         $total = $itens['total'] ?? 0;
@@ -59,7 +64,9 @@ class compras_itens {
 
 	    $param = [];
 	    $param['texto'] = 'Incluir Item';
-	    $param['onclick'] = "incluiRat($num_tarefas);";
+		if(!$this->_visualizar) {
+			$param['onclick'] = "incluiRat($num_tarefas);";
+		}
 	    $param['id'] = 'myInput';
 	    $ret .= formbase01::formBotao($param);
 	    
@@ -81,37 +88,44 @@ class compras_itens {
         $tab->addColuna(array('campo' => 'valor_total'		    , 'etiqueta' => 'Valor Total'			, 'tipo' => 'V', 'width' => '10', 'posicao' => 'E'));
 	    $tab->addColuna(array('campo' => 'bt'					, 'etiqueta' => ''						, 'tipo' => 'V', 'width' => ' 50', 'posicao' => 'D'));
 
+		$cont = "var cont = []; ";
+		$mask = '';
 		if(!empty($itens) && count($itens) > 0){
 			$dados = [];
 			$num = 0;
-			$cont = "var cont = []; ";
+			$disabled = $this->_visualizar ? 'disabled="disabled"' : '';
 			foreach($itens as $item){
 				$temp = array();
 				$cont.= "cont[$num] = $num; ";
 				//$temp['id_item'] = "<input type='text' name='formOS[id_item][]' value='{$item['id']}' style='width:100%;text-align: right;' id='" . ($num+1) . "campoiditem' class='form-control  form-control-sm' hidden          >";
 				// $ret .= "<input type='text' name='formOS[$num][produto_id]' value='{$item['id']}' style='width:100%;text-align: right;' id='" . ($num+1) . "campoiditem' class='form-control  form-control-sm' hidden          >";
 
-                $temp['produto_id'] = "<input type='hidden' value='{$item['compra_item_id']}' name='formOS[$num][compra_item_id]' id='" . ($num) . "campoiditem'>";
-				$temp['produto_id'] .= "<select name='formOS[$num][produto_id]' style='width:100%;text-align: right;' id='" . ($num) . "campoidproduto' class='form-control  form-control-sm'>".$this->criarCampoSelect($item['produto_id'])."</select>";
-				$temp['valor_produto'] = "<input onkeyup='atualizaTotal($num)' type='text' name='formOS[$num][valor_produto]' value='{$item['valor_produto']}' style='width:100%;text-align: right;' id='" . ($num) . "campovalorproduto' class='form-control  form-control-sm'         >";
-				$temp['quantidade'] = "<input onkeyup='atualizaTotal($num)' onkeypress='return event.charCode >= 48 && event.charCode <= 57' type='number' name='formOS[$num][quantidade]' value='{$item['quantidade']}' style='width:100%;text-align: right;' id='" . ($num) . "campoquantidade' class='form-control  form-control-sm'          >";
-                $temp['valor_total'] = "<input type='text' name='formOS[$num][valor_total]' value='{$item['valor_total']}' style='width:100%;text-align: right;' id='" . ($num) . "campovalortotal' class='form-control  form-control-sm'         >";
-				$temp['bt'] = "<button type='button' id='".$num."campoexcluir' class='btn btn-xs btn-danger float-left' onclick='excluirRat(\"$num\");'>Excluir</button>";
+                $temp['produto_id'] = "<input $disabled type='hidden' value='{$item['compra_item_id']}' name='formOS[$num][compra_item_id]' id='" . ($num) . "campoiditem'>";
+				$temp['produto_id'] .= "<select $disabled name='formOS[$num][produto_id]' style='width:100%;text-align: right;' id='" . ($num) . "campoidproduto' class='form-control  form-control-sm'>".$this->criarCampoSelect($item['produto_id'])."</select>";
+				$temp['valor_produto'] = "<input $disabled onkeyup='atualizaTotal($num)' type='text' name='formOS[$num][valor_produto]' value='{$item['valor_produto']}' style='width:100%;text-align: right;' id='" . ($num) . "campovalorproduto' class='form-control  form-control-sm'         >";
+				$temp['quantidade'] = "<input $disabled onkeyup='atualizaTotal($num)' onkeypress='return event.charCode >= 48 && event.charCode <= 57' type='number' name='formOS[$num][quantidade]' value='{$item['quantidade']}' style='width:100%;text-align: right;' id='" . ($num) . "campoquantidade' class='form-control  form-control-sm'          >";
+                $temp['valor_total'] = "<input $disabled type='text' name='formOS[$num][valor_total]' value='{$item['valor_total']}' style='width:100%;text-align: right;' id='" . ($num) . "campovalortotal' class='form-control  form-control-sm'         >";
+				$temp['bt'] = "<button $disabled type='button' id='".$num."campoexcluir' class='btn btn-xs btn-danger float-left' onclick='excluirRat(\"$num\");'>Excluir</button>";
 				
 				$dados[] = $temp;
+				$mask .= "$( '#{$num}campovalorproduto' ).mask('###.###.###.###.##0,00',{reverse: true});";
 				$num++;
 			}
 			$tab->setDados($dados);
-			addPortaljavaScript("$cont
-			calculaTotalItens();");
+			
 		}
-        $tab .= "<input type='text' name='total' id='total' value='$total' onblur='calculaTotalItens();' style='text-align: right;'>";
+		$total = 'R$ ' . number_format($total, 2, ',', '.');
+        $tab .= "<input type='text' name='total' id='total' value='$total' onblur='calculaTotalItens();' style='text-align: right;' disabled='disabled'>";
 
 		// foreach($dados as $d) {
 		// 	$ret .= $d['id_item'];
 		// }
 
 	    $ret .= $tab;
+
+		addPortaljavaScript("$cont
+			$mask
+			calculaTotalItens();", 'F');
 	    
 	    return $ret;
     }
