@@ -70,7 +70,53 @@ class servicos {
     }
 
     private function getFiltro() {
-        $ret = '';
+        $form = new form01(['botaoSubmit' => false]);
+
+        $param = [];
+		$param['campo'] = 'de';
+		$param['etiqueta'] = 'De';
+		$param['largura'] = '6';
+		$param['tipo'] = 'D';
+        $param['valor'] = $_POST['de'] ?? '';
+		$form->addCampo($param);
+
+        $param = [];
+		$param['campo'] = 'ate';
+		$param['etiqueta'] = 'Até';
+		$param['largura'] = '6';
+		$param['tipo'] = 'D';
+        $param['valor'] = $_POST['ate'] ?? '';
+		$form->addCampo($param);
+
+        $form->setEnvio(getLink() . "index", 'formFiltro');
+
+        $ret = "<div style='display: grid; place-items: center;'>
+                    <div style='width: 30%;'>
+                        $form
+                    </div>
+                    <div>
+                        <input type='submit' onclick='document.getElementById(\"formFiltro\").submit();' value='Gerar' class='btn btn-primary'>
+                        <input type='button' onclick='document.getElementById(\"filtro_datas\").classList.add(\"collapsed-card\");' value='Cancelar' class='btn btn-danger'>
+                    </div>
+                </div>";
+
+        $param = array();
+        $p = array();
+        $p['onclick'] = "document.getElementById('filtro_datas').classList.remove('collapsed-card');";
+        $p['tamanho'] = 'pequeno';
+        $p['cor'] = 'success';
+        $p['texto'] = 'Filtrar';
+        $p2 = [];
+        $param['botoesTitulo'][] = $p;
+        $param['versao'] = 1;
+        $param['titulo'] = 'Filtro';
+        $param['conteudo'] = $ret;
+        $param['cor'] = 'success';
+        $param['iniciar_minimizado'] = true;
+        $param['id'] = 'filtro_datas';
+        $ret = addCard($param);
+
+        return $ret;
     }
 
     private function montaColunas() {
@@ -85,11 +131,23 @@ class servicos {
     private function getDados() {
         $ret = [];
         $tipos = ['Nenhum Especificado', 'Simples', 'Detalhada'];
+        $where = '';
+        $limite = 'LIMIT 100';
+
+        if(isset($_POST['de']) && !empty($_POST['de'])) {
+            $de = datas::dataD2S($_POST['de'], '-');
+            $ate = !empty($_POST['ate']) ? datas::dataD2S($_POST['ate'], '-') : $de;
+
+            $where = "WHERE data_inc >= '$de' AND data_inc <= '$ate'";
+            $limite = '';
+        }
 
         $sql = "SELECT vendas.*, clientes.nome, clientes.telefone
                 FROM vendas
                 LEFT JOIN clientes USING(cliente_id)
-                ORDER BY venda_id DESC";
+                $where
+                ORDER BY venda_id DESC
+                $limite";
         $rows = query($sql);
 
         if(is_array($rows) && count($rows) > 0) {
