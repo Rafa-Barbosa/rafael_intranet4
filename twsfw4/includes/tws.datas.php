@@ -102,7 +102,9 @@ class datas {
 	 * @return array	[0][datas entre as duas datas informadas]
 	 * 					[1][dia da semana das datas]
 	 */
-	static function calendario($data_inicio,$data_fim, $semana = "ext"){
+	static function calendario($data_inicio,$data_fim, $semana = "ext", $sep_saida = ''){
+		$data_inicio = str_replace('-', '', $data_inicio);
+		$data_fim = str_replace('-', '', $data_fim);
 		$dia_semana = [];
 		if ($semana == "ext"){
 			$dia_semana["Mon"] = "Seg";
@@ -135,7 +137,7 @@ class datas {
 			if (intval($ini_mes) < 10) {$str_mes = "0".intval($ini_mes);}else{$str_mes = $ini_mes;}
 			
 			if (checkdate($ini_mes, $ini_dia, $ini_ano)){
-				$datas[0][] = $ini_ano.$str_mes.$str_dia;
+				$datas[0][] = $ini_ano.$sep_saida.$str_mes.$sep_saida.$str_dia;
 				$datas[1][] = $dia_semana[strftime("%a", mktime(0,0,0,$ini_mes, $ini_dia, $ini_ano))];
 			}else{
 				$ini_dia = 0;
