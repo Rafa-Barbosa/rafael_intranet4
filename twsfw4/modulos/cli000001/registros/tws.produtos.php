@@ -27,6 +27,8 @@ class produtos {
     public function index() {
         $ret = '';
 
+        $this->gerarAvisos();
+
         // =========== MONTA E APRESENTA A TABELA =================
 		$this->montaColunas();
 		$dados = $this->getDados();
@@ -67,11 +69,38 @@ class produtos {
         return $ret;
     }
 
+    private function gerarAvisos() {
+        $sql = "SELECT descricao, quantidade, quantidade_minima FROM produtos WHERE quantidade <= quantidade_minima AND ativo = 'S'";
+        $rows = query($sql);
+
+        $limite = [];
+        $abaixo = [];
+        if(is_array($rows) && count($rows) > 0) {
+            foreach($rows as $row) {
+                if($row['quantidade'] == $row['quantidade_minima']) {
+                    $limite[] = $row['descricao'];
+                } else {
+                    $abaixo[] = $row['descricao'];
+                }
+            }
+            
+            if(!empty($limite)) {
+                $limite = implode(', ', $limite);
+                addPortalMensagem("Os produtos (<b>$limite</b>) estão no limite de seu estoque, recomenda-se comprar mais!", 'info');
+            }
+            if(!empty($abaixo)) {
+                $abaixo = implode(', ', $abaixo);
+                addPortalMensagem("Os produtos (<b>$abaixo</b>) estão abaixo do seu limite de estoque!", 'warning');
+            }
+        }
+    }
+
     private function montaColunas() {
         $this->_tabela->addColuna(array('campo' => 'descricao', 'etiqueta' => 'Descrição', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'marca', 'etiqueta' => 'Marca', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'modelo', 'etiqueta' => 'Modelo', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'quantidade', 'etiqueta' => 'Quantidade', 'tipo' => 'N', 'width' => 100, 'posicao' => 'E'));
+        $this->_tabela->addColuna(array('campo' => 'quantidade_minima', 'etiqueta' => 'Quantidade Mínima', 'tipo' => 'N', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'fornecedor', 'etiqueta' => 'Fornecedor', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'ativo', 'etiqueta' => 'Ativo', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
     }
@@ -88,13 +117,14 @@ class produtos {
         if(is_array($rows) && count($rows) > 0) {
             foreach($rows as $row) {
                 $temp = [];
-                $temp['id']         = $row['produto_id'];
-                $temp['descricao']  = $row['descricao'];
-                $temp['marca']      = $row['marca'];
-                $temp['modelo']     = $row['modelo'];
-                $temp['quantidade'] = $row['quantidade'];
-                $temp['fornecedor'] = $row['nome_fantasia'];
-                $temp['ativo']      = ($row['ativo'] == 'S') ? 'Sim' : 'Não';
+                $temp['id']                 = $row['produto_id'];
+                $temp['descricao']          = $row['descricao'];
+                $temp['marca']              = $row['marca'];
+                $temp['modelo']             = $row['modelo'];
+                $temp['quantidade']         = $row['quantidade'];
+                $temp['quantidade_minima']  = $row['quantidade_minima'];
+                $temp['fornecedor']         = $row['nome_fantasia'];
+                $temp['ativo']              = ($row['ativo'] == 'S') ? 'Sim' : 'Não';
                 $ret[] = $temp;
             }
         }
@@ -153,6 +183,17 @@ class produtos {
         $param['mascara'] = 'N';
 		$param['obrigatorio'] = true;
 		$param['valor'] = $row['quantidade'] ?? '';
+        $param['readonly'] = $visualizar;
+        $form->addCampo($param);
+
+        $param = [];
+        $param['campo'] = 'quantidade_minima';
+		$param['etiqueta'] = 'Quantidade Mínima';
+		$param['largura'] = '2';
+		$param['tipo'] = 'N';
+        $param['mascara'] = 'N';
+		$param['obrigatorio'] = true;
+		$param['valor'] = $row['quantidade_minima'] ?? '';
         $param['readonly'] = $visualizar;
         $form->addCampo($param);
 
@@ -216,12 +257,13 @@ class produtos {
             }
 
             $temp = [];
-            $temp['descricao']      = $_POST['descricao'];
-            $temp['marca']          = $_POST['marca'];
-            $temp['modelo']         = $_POST['modelo'];
-            $temp['quantidade']     = $_POST['quantidade'];
-            $temp['fornecedor_id']  = $_POST['fornecedor_id'];
-            $temp['ativo']          = $_POST['ativo'];
+            $temp['descricao']          = $_POST['descricao'];
+            $temp['marca']              = $_POST['marca'];
+            $temp['modelo']             = $_POST['modelo'];
+            $temp['quantidade']         = $_POST['quantidade'];
+            $temp['quantidade_minima']  = $_POST['quantidade_minima'];
+            $temp['fornecedor_id']      = $_POST['fornecedor_id'];
+            $temp['ativo']              = $_POST['ativo'];
 
             $sql = montaSQL($temp, 'produtos', $tipo, $where);
             query($sql);
