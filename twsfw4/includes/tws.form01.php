@@ -92,7 +92,7 @@ class form01{
 		
 		$this->_sendNoFooter					= verificaParametro($param, 'sendNoFooter', true);
 		if($this->_sendNoFooter){
-			$this->setBotaoCancela();
+			$this->setBotaoCancela($this->_URLcancelar);
 		}
 	}
 	
