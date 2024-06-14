@@ -17,6 +17,9 @@ class servicos {
     // Classe tabela01
     private $_tabela;
 
+    // Tipos de labvagem
+    private $_tipos = ['Não especificado', 'Simples', 'Detalhada', 'Enchente'];
+
     function __construct() {
         $param = [];
 		$param['titulo'] = 'Serviços';
@@ -124,13 +127,13 @@ class servicos {
         $this->_tabela->addColuna(array('campo' => 'cliente', 'etiqueta' => 'Cliente', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'telefone', 'etiqueta' => 'Telefone', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'tipo', 'etiqueta' => 'Tipo', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
+        $this->_tabela->addColuna(array('campo' => 'placa', 'etiqueta' => 'Placa', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'veiculo', 'etiqueta' => 'Veículo', 'tipo' => 'T', 'width' => 100, 'posicao' => 'E'));
         $this->_tabela->addColuna(array('campo' => 'valor', 'etiqueta' => 'Valor', 'tipo' => 'RS', 'width' => 100, 'posicao' => 'E'));
     }
 
     private function getDados() {
         $ret = [];
-        $tipos = ['Nenhum Especificado', 'Simples', 'Detalhada'];
         $where = '';
         $limite = 'LIMIT 100';
 
@@ -154,10 +157,11 @@ class servicos {
             foreach($rows as $row) {
                 $temp = [];
                 $temp['id'] = $row['venda_id'];
-                $temp['data'] = str_replace('-', '', $row['data_inc']);
+                $temp['data'] = str_replace('-', '', $row['data']);
                 $temp['cliente'] = $row['nome'];
                 $temp['telefone'] = $row['telefone'];
-                $temp['tipo'] = $tipos[$row['tipo']];
+                $temp['tipo'] = $this->_tipos[$row['tipo']];
+                $temp['placa'] = $row['placa'];
                 $temp['veiculo'] = $row['veiculo'];
                 $temp['valor'] = $row['valor'];
                 $ret[] = $temp;
@@ -170,7 +174,9 @@ class servicos {
     public function incluir() {
         $ret = '';
         $id = $_GET['id'] ?? '';
+        $id_baixa = $_GET['id_baixa'] ?? '';
         $visualizar = $_GET['visualizar'] ?? false;
+        $url_cancelar = '';
 
         if(!empty($id)) {
             $sql = "SELECT vendas.*, clientes.nome
@@ -179,11 +185,30 @@ class servicos {
                     WHERE venda_id = $id";
             $row = query($sql);
             $row = $row[0];
+        }
+        else if(!empty($id_baixa)) {
+            $sql = "SELECT cliente_id, tipo, data, placa, veiculo
+                    FROM agenda
+                    WHERE agenda_id = $id_baixa";
+            $row = query($sql);
+            $row = $row[0];
 
-            $apenas_leitura = true;
+            $url_cancelar = "index.php?menu=movimentacao.agenda.index";
         }
 
-        $form = new form01();
+        $param = [];
+        $param['cancelar'] = $url_cancelar;
+        $form = new form01($param);
+
+        $param = [];
+        $param['campo'] = 'data';
+		$param['etiqueta'] = 'Data';
+		$param['largura'] = '2';
+		$param['tipo'] = 'D';
+		$param['obrigatorio'] = true;
+		$param['valor'] = isset($row['data']) ? datas::dataMS2D($row['data']) : date('d/m/Y');
+        $param['readonly'] = $visualizar;
+        $form->addCampo($param);
 
         $param = [];
         $param['campo'] = 'cliente_id';
@@ -201,7 +226,7 @@ class servicos {
 		$param['etiqueta'] = 'Tipo';
 		$param['largura'] = '2';
 		$param['tipo'] = 'A';
-        $param['opcoes'] = ['-- Selecione --', 'Simples', 'Detalhada'];
+        $param['opcoes'] = $this->_tipos;
 		$param['obrigatorio'] = true;
 		$param['valor'] = $row['tipo'] ?? '';
         $param['readonly'] = $visualizar;
@@ -220,6 +245,17 @@ class servicos {
         $form->addCampo($param);
 
         $param = [];
+        $param['campo'] = 'placa';
+		$param['etiqueta'] = 'Placa';
+		$param['largura'] = '2';
+		$param['tipo'] = 'C';
+        $param['maxtamanho'] = 7;
+		// $param['obrigatorio'] = true;
+		$param['valor'] = $row['placa'] ?? '';
+        $param['readonly'] = $visualizar;
+        $form->addCampo($param);
+
+        $param = [];
         $param['campo'] = 'veiculo';
 		$param['etiqueta'] = 'Veículo';
 		$param['largura'] = '2';
@@ -233,7 +269,7 @@ class servicos {
         $param = [];
         $param['campo'] = 'obs';
 		$param['etiqueta'] = 'Obs';
-		$param['largura'] = '2';
+		$param['largura'] = '5';
 		$param['tipo'] = 'C';
         $param['maxtamanho'] = 150;
 		// $param['obrigatorio'] = true;
@@ -245,9 +281,11 @@ class servicos {
 
         $ret .= $form;
 
+        $url_cancelar = empty($url_cancelar) ? getLink() . "index" : $url_cancelar;
+
         $param = array();
 		$p = array();
-		$p['onclick'] = "setLocation('" . getLink() . "index')";
+		$p['onclick'] = "setLocation('$url_cancelar')";
 		$p['tamanho'] = 'pequeno';
 		$p['cor'] = 'danger';
 		$p['texto'] = 'Voltar';
@@ -277,11 +315,13 @@ class servicos {
             $valor = str_replace('.', '', $_POST['valor']);
             $valor = str_replace(',', '.', $valor);
 
+            $temp['data']       = datas::dataD2S($_POST['data'], '-');
             $temp['cliente_id'] = $_POST['cliente_id'];
             $temp['tipo']       = $_POST['tipo'];
+            $temp['placa']      = strtoupper($_POST['placa']);
             $temp['veiculo']    = $_POST['veiculo'];
             $temp['valor']      = $valor;
-            $temp['obs']  = str_replace(["'", '"'], '', $_POST['obs']);
+            $temp['obs']        = str_replace(["'", '"'], '', $_POST['obs']);
 
             $sql = montaSQL($temp, 'vendas', $tipo, $where);
             query($sql);
