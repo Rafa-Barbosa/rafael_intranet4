@@ -311,10 +311,12 @@ class agenda {
 
         // $where = implode(' AND ', $where);
 
-        $sql = "SELECT a.*, c.nome, (SELECT COUNT(*) FROM agenda AS a2 WHERE a2.data = a.data AND a2.hora = a.hora AND a2.ativo = 'S') AS total_nessa_hora
+        $sql = "SELECT a.*, c.nome, p.quant_dias
                 FROM agenda AS a
                 LEFT JOIN clientes AS c USING(cliente_id)
-                WHERE a.ativo = 'S' AND a.data >= '$de' AND a.data <= '$ate'
+                LEFT JOIN agenda_parametros_detalhadas AS p ON a.tipo >= 2 AND a.tipo = p.tipo
+                WHERE a.ativo = 'S'
+                    AND ((a.data >= '$de' AND a.data <= '$ate') OR a.data >= DATE_ADD('$de', INTERVAL -p.quant_dias DAY))
                 ORDER BY a.data, a.hora";
         $rows = query($sql);
 
@@ -339,24 +341,23 @@ class agenda {
                     $temp['tipo'] = $this->_tipos[$row['tipo']];
                     $ret[] = $temp;
                 } else {
-                    $sql = "SELECT quant_dias FROM agenda_parametros_detalhadas WHERE tipo = ".$row['tipo'];
-                    $parametros = query($sql);
-                    $quant_dias = $parametros[0]['quant_dias'];
-
+                    $quant_dias = $row['quant_dias'];
                     $dia_temp = $row['data'];
 
                     for($i = 1; $i <= $quant_dias; $i++) {
                         $dia_todo[$dia_temp] = true;
 
-                        $temp = [];
-                        $temp['id'] = $row['agenda_id'];
-                        $temp['dia'] = str_replace('-', '', $dia_temp);
-                        $temp['hora'] = substr($row['hora'], 0, 5);
-                        $temp['cliente'] = $row['nome'];
-                        $temp['placa'] = $row['placa'];
-                        $temp['veiculo'] = $row['veiculo'];
-                        $temp['tipo'] = $this->_tipos[$row['tipo']];
-                        $ret[] = $temp;
+                        if($dia_temp >= $de && $dia_temp <= $ate) {
+                            $temp = [];
+                            $temp['id'] = $row['agenda_id'];
+                            $temp['dia'] = str_replace('-', '', $dia_temp);
+                            $temp['hora'] = substr($row['hora'], 0, 5);
+                            $temp['cliente'] = $row['nome'];
+                            $temp['placa'] = $row['placa'];
+                            $temp['veiculo'] = $row['veiculo'];
+                            $temp['tipo'] = $this->_tipos[$row['tipo']];
+                            $ret[] = $temp;
+                        }
 
                         $dia = explode('-', $dia_temp);
                         $dia_temp = date('Y-m-d', mktime(0, null, null, $dia[1], $dia[2]+1, $dia[0]));
