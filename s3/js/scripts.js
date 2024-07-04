@@ -54,4 +54,15 @@ function FormataHora(campo,teclapres) {
 	}
 	return false;
 }
+
+function mostraFiltro(div_filtro) {
+	var div_filtro = document.getElementById(div_filtro);
+	var escondido = div_filtro.classList.contains('collapsed-card');
+	
+	if(escondido) {
+		div_filtro.classList.remove('collapsed-card');
+	} else {
+		div_filtro.classList.add('collapsed-card');
+	}
+}
 //-->

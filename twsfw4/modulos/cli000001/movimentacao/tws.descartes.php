@@ -95,13 +95,12 @@ class descartes {
                     </div>
                     <div>
                         <input type='submit' onclick='document.getElementById(\"formFiltro\").submit();' value='Gerar' class='btn btn-primary'>
-                        <input type='button' onclick='document.getElementById(\"filtro_datas\").classList.add(\"collapsed-card\");' value='Cancelar' class='btn btn-danger'>
                     </div>
                 </div>";
 
         $param = array();
         $p = array();
-        $p['onclick'] = "document.getElementById('filtro_datas').classList.remove('collapsed-card');";
+        $p['onclick'] = "mostraFiltro('filtro_datas');";
         $p['tamanho'] = 'pequeno';
         $p['cor'] = 'success';
         $p['texto'] = 'Filtrar';

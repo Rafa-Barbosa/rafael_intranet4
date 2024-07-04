@@ -28,7 +28,6 @@ class agenda {
     function __construct() {
         date_default_timezone_set('America/Sao_Paulo');
 
-        $this->gerarJs();
         $this->setFiltros();
 
         $param = [];
@@ -125,7 +124,7 @@ class agenda {
 
         $param = array();
         $p = array();
-        $p['onclick'] = "mostraFiltro()";
+        $p['onclick'] = "mostraFiltro('filtro_datas')";
         $p['tamanho'] = 'pequeno';
         $p['cor'] = 'success';
         $p['texto'] = 'Filtrar';
@@ -578,21 +577,5 @@ class agenda {
         }
 
         return $ret;
-    }
-
-    private function gerarJs() {
-        $js = "
-        function mostraFiltro() {
-            var div_filtro = document.getElementById('filtro_datas');
-            var escondido = div_filtro.classList.contains('collapsed-card');
-            
-            if(escondido) {
-                div_filtro.classList.remove('collapsed-card');
-            } else {
-                div_filtro.classList.add('collapsed-card');
-            }
-        }";
-
-        addPortaljavaScript($js, 'F');
     }
 }
