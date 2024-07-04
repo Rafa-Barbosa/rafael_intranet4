@@ -278,7 +278,8 @@ function query($sql, $debugQuery = false, $debugRet = false){
 		$sql = strtoupper(trim($sql));
 		$pos1 = strpos($sql, "SELECT");
 		$pos2 = strpos($sql, "DESCRIBE");
-		if(($pos1 === false || $pos1 > 5) && $pos2 === false){
+		$pos3 = strpos($sql, "SHOW");
+		if(($pos1 === false || $pos1 > 5) && $pos2 === false && $pos3 === false){
 			//			$ret = $db->GenID;
 			return true;
 		}else{
