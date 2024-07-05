@@ -60,11 +60,12 @@ class exporta_banco {
             }
         }
 
-        $caminho = "C:\\User\\Guilherme\\OneDrive\\backups_banco\\".date('Y_m_d');
+        $caminho = "C:\\User\\Guilherme\\OneDrive\\backups_banco\\";
         if(!file_exists($caminho)) {
             mkdir($caminho, 0777, true);
             chMod($caminho, 0777);
         }
+        $caminho .= date('Y_m_d').'.sql';
         file_put_contents($caminho, $ret);
 
         // echo $ret;
