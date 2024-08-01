@@ -273,6 +273,31 @@ class tabela01{
 							$valorCampo = '';
 						}
 						break;
+					case "RS":
+						//Valor em reais
+						if($this->_imprimeZero || $valorCampo != '' ){
+							if($valorCampo == "" || !$valorCampo) $valorCampo = 0;
+							if(!preg_match("/([a-zA-Z])/", $valorCampo ) ){
+								$valorCampo = 'R$ ' . number_format($valorCampo, 2, ',', '.');
+							}
+						}else{
+							$valorCampo = '';
+						}
+						break;
+					case 'CPF_CNPJ':
+						if($this->_imprimeZero || $valorCampo != '' ){
+							if($valorCampo == "" || !$valorCampo) $valorCampo = 0;
+							if(!preg_match("/([a-zA-Z])/", $valorCampo )){
+								if(strlen($valorCampo) == 14) {
+									$valorCampo = substr($valorCampo, 0, 2).'.'.substr($valorCampo, 2, 3).'.'.substr($valorCampo, 5, 3).'/'.substr($valorCampo, 8, 4).'-'.substr($valorCampo, 12, 2);
+								} else if(strlen($valorCampo) == 11) {
+									$valorCampo = substr($valorCampo, 0, 3).'.'.substr($valorCampo, 3, 3).'.'.substr($valorCampo, 6, 3).'-'.substr($valorCampo, 9, 2);
+								}
+							}
+						}else{
+							$valorCampo = '';
+						}
+						break;
 				}
 				
 				if($valorCampo == ''){
@@ -464,6 +489,31 @@ class tabela01{
 							$valorCampo = datas::dataS2D($valorCampo);
 						}
 						break;
+					case "RS":
+						//Valor em reais
+						if($this->_imprimeZero || $valorCampo != '' ){
+							if($valorCampo == "" || !$valorCampo) $valorCampo = 0;
+							if(!preg_match("/([a-zA-Z])/", $valorCampo ) ){
+								$valorCampo = 'R$ ' . number_format($valorCampo, 2, ',', '.');
+							}
+						}else{
+							$valorCampo = '';
+						}
+						break;
+					case 'CPF_CNPJ':
+						if($this->_imprimeZero || $valorCampo != '' ){
+							if($valorCampo == "" || !$valorCampo) $valorCampo = 0;
+							if(!preg_match("/([a-zA-Z])/", $valorCampo )){
+								if(strlen($valorCampo) == 14) {
+									$valorCampo = substr($valorCampo, 0, 2).'.'.substr($valorCampo, 2, 3).'.'.substr($valorCampo, 5, 3).'/'.substr($valorCampo, 8, 4).'-'.substr($valorCampo, 12, 2);
+								} else if(strlen($valorCampo) == 11) {
+									$valorCampo = substr($valorCampo, 0, 3).'.'.substr($valorCampo, 3, 3).'.'.substr($valorCampo, 6, 3).'-'.substr($valorCampo, 9, 2);
+								}
+							}
+						}else{
+							$valorCampo = '';
+						}
+						break;
 				}
 				if($negrito) {
 					$valorCampo = "<b>$valorCampo</b>";
@@ -563,7 +613,9 @@ class tabela01{
 					$url = str_replace("{COLUNA:$campo}" ,$this->_dados[$l][$campo],$url);
 				}
 				$acao['onclick'] = $url;
-				$acao['tipo'] = 'botao';
+				if(empty($acao['link'])) {
+					$acao['tipo'] = 'botao';
+				}
 			}
 			
 			if($acao['funcao'] == ''){
